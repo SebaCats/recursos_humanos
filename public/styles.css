@@ -1,0 +1,19 @@
+.search-icon {
+    padding: 10px 10px 10px 40px;
+    /* Añadimos el icono como fondo */
+    background-image: url('static/search.svg');
+    background-position: 12px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+  }
+
+  .bg-gray {
+    background-color: #F5F6F9;
+  }
+
+  .shadow-r {
+    box-shadow: 2px 4px 4px 0px rgba(0, 0, 0, 0.15)
+  }
+  .shadow-b {
+    box-shadow: 2px 3px 4px 0px rgba(0, 0, 0, 0.15)
+  }
