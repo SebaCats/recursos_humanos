@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Panel de Recursos Humanos: resumen ejecutivo, indicadores y directorio de empleados.">
+    <title>RR.HH. · Resumen</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body class="d-flex flex-row bg-gray">
+
+    <!-- Barra lateral -->
+    <aside class="d-flex flex-column vh-100 p-3 border-end bg-white shadow-r" style="min-width: 250px;">
+        <!-- Sección usuario -->
+        <section class="d-flex align-items-center gap-2 mb-4 pb-3 border-bottom">
+            <img src="https://randomuser.me/api/portraits/thumb/men/75.jpg" class="rounded-circle" width="36"
+                height="36" alt="Usuario">
+            <div class="overflow-hidden">
+                <strong class="d-block text-truncate">Usuario Prueba</strong>
+                <small class="text-body-tertiary d-block text-truncate">Admin</small>
+            </div>
+        </section>
+
+        <!-- Menú de navegación -->
+        <nav class="flex-grow-1">
+            <ul class="nav nav-pills flex-column gap-2">
+                <li id="resumen" class="nav-item bg-primary-subtle rounded fw-bold">
+                    <a href="resumen.html" class="nav-link px-2" aria-current="page">Resumen</a>
+                </li>
+                <li id="directorio" class="nav-item rounded fw-bold">
+                    <a href="directorio.html" class="nav-link px-2">Directorio</a>
+                </li>
+            </ul>
+        </nav>
+        <a class="btn btn-secondary bg-primary fw-bold" href="login.html">Cerrar sesión</a>
+    </aside>
+
+    <!-- Área de contenido principal -->
+    <div class="flex-grow-1 d-flex flex-column overflow-auto vh-100">
+        <!-- Header  -->
+        <header
+            class="sticky-top z-3 d-flex align-items-center justify-content-between p-3 mx-4 mt-0 rounded border-bottom shadow-b bg-white">
+            <h5 class="text-body-tertiary d-flex m-0">Horizon ><div class="text-black mx-1">Recursos humanos</div>
+            </h5>
+            <input class="form-control me-2 search-icon bg-gray border-0" type="search"
+                placeholder="Buscar en mi empresa..." style="width: 250px;" />
+        </header>
+
+        <!-- Contenido principal (antes pages/resumen.ejs) -->
+        <main class="flex-grow-1 px-4">
+            <!-- Contenido principal -->
+            <div class="container-fluid p-0 mt-3">
+                <h1>Las personas en perspectiva</h1>
+                <p class="text-body-tertiary">Una visión de tu equipo y de las decisiones que necesitan tu atención.</p>
+            </div>
+
+            <!-- Cards de información-->
+            <div class="container-fluid p-0">
+                <div class="row g-3">
+                    <!-- Card plantilla -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <article class="card shadow-b p-3 h-100">
+                            <section class="text-body-tertiary">Plantilla activa</section>
+                            <h1 id="plantillaActiva">250</h1>
+                            <small class="text-success">+5 personas respecto a septiembre</small>
+                        </article>
+                    </div>
+                    <!-- Card rotación -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <article class="card shadow-b p-3 h-100">
+                            <section class="text-body-tertiary">Rotación acumulada</section>
+                            <h1>2,8%</h1>
+                            <small class="text-success">-0,3 pp · últimos 12 meses</small>
+                        </article>
+                    </div>
+                    <!-- Card ausentismo -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <article class="card shadow-b p-3 h-100">
+                            <section class="text-body-tertiary">Ausentismo mensual</section>
+                            <h1>3,2%</h1>
+                            <small class="text-success">Objetivo interno: menos de 4 %</small>
+                        </article>
+                    </div>
+                    <!-- Card coste nómina -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <article class="card shadow-b p-3 h-100">
+                            <section class="text-body-tertiary">Coste de nómina previsto</section>
+                            <h1 id="totalNomina">$707.678.740</h1>
+                            <small class="text-success">Octubre · pendiente de cierre</small>
+                        </article>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de gráficas (2 columnas) -->
+            <div class="container-fluid p-0 my-3">
+                <div class="row g-3">
+                    <!-- Card evolución plantilla -->
+                    <div class="col-8">
+                        <article class="card shadow-b p-3 h-100">
+                            <section>
+                                <h4>Evolución de la plantilla</h4>
+                                <small class="text-body-tertiary">Personas activas al cierre de cada mes</small>
+                            </section>
+                            <canvas style="max-height: 250px;" id="myChart" role="img"
+                                aria-label="Evolución mensual de la plantilla activa"></canvas>
+                            <div class="d-flex justify-content-between h-100 align-items-end">
+                                <small class="text-body-tertiary">Altas en octubre: 8 - Bajas: 4</small>
+                                <small class="text-primary">Ver movimiento de plantilla →</small>
+                            </div>
+                        </article>
+                    </div>
+
+                    <!-- Card distribución departamento -->
+                    <div class="col-4">
+                        <article class="card shadow-b p-3 h-100">
+                            <section>
+                                <h4>Distribución por departamento</h4>
+                                <small id="totalPlantillaText" class="text-body-tertiary">250 personas - plantilla actual</small>
+                            </section>
+                            <!-- Barras de progreso: resumen.js las regenera con los datos de la API -->
+                            <div id="progressDiv" class="d-flex flex-column gap-1">
+                                <div class="d-flex justify-content-between">
+                                    <small>Operaciones</small>
+                                    <small>25 - 10%</small>
+                                </div>
+                                <div class="progress" role="progressbar" aria-label="Operaciones" aria-valuenow="10"
+                                    aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar" style="width: 10%"></div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small>Tecnología</small>
+                                    <small>75 - 30%</small>
+                                </div>
+                                <div class="progress" role="progressbar" aria-label="Tecnología" aria-valuenow="30"
+                                    aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar" style="width: 30%"></div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small>Comercial</small>
+                                    <small>50 - 20%</small>
+                                </div>
+                                <div class="progress" role="progressbar" aria-label="Comercial" aria-valuenow="20"
+                                    aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar" style="width: 20%"></div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small>Finanzas</small>
+                                    <small>80 - 32%</small>
+                                </div>
+                                <div class="progress" role="progressbar" aria-label="Finanzas" aria-valuenow="32"
+                                    aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar" style="width: 32%"></div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small>Personas</small>
+                                    <small>20 - 8%</small>
+                                </div>
+                                <div class="progress" role="progressbar" aria-label="Personas" aria-valuenow="8"
+                                    aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar" style="width: 8%"></div>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                    <!-- Card decisiones -->
+                    <div class="col-8">
+                        <article class="card shadow-b p-3 h-100">
+                            <section>
+                                <h4>Tu bandeja de decisiones</h4>
+                                <small class="text-body-tertiary">Personas activas al cierre de cada mes</small>
+                            </section>
+
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">SOLICITUDES</th>
+                                        <th scope="col">RESPONSABLE</th>
+                                        <th scope="col">VENCE</th>
+                                        <th scope="col">ESTADO</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Vacaciones · Ana García</td>
+                                        <td>Carlos Ruiz</td>
+                                        <td>Hoy</td>
+                                        <td>● Pendiente</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Revisión de nómina</td>
+                                        <td>Lucía Vega</td>
+                                        <td>28 oct</td>
+                                        <td>● Incidencias</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Contrato · Diego Pardo</td>
+                                        <td>Lucía Vega</td>
+                                        <td>21 oct</td>
+                                        <td>● Pendiente</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="d-flex justify-content-between h-100 align-items-end">
+                                <small class="text-primary">Ver los 7 pendientes →</small>
+                            </div>
+                        </article>
+                    </div>
+                    <!-- Card actividad reciente -->
+                    <div class="col-4">
+                        <article class="card shadow-b p-3 h-100">
+                            <section>
+                                <h4>Actividad reciente</h4>
+                                <small class="text-body-tertiary">246 personas - plantilla actual</small>
+                            </section>
+                            <ul class="list-group list-group-flush border-top-0">
+                                <li class="list-group-item">Marta Soler actualizó un objetivo</li>
+                                <li class="list-group-item">Diego Pardo completó su perfil</li>
+                                <li class="list-group-item">Carlos Ruiz aprobó 2 ausencias</li>
+                                <li class="list-group-item">Nómina de septiembre publicada</li>
+                            </ul>
+                            <div class="d-flex justify-content-between h-100 align-items-end">
+                                <small class="text-primary">Abrir registro de actividad →</small>
+                            </div>
+                        </article>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="container-fluid p-0 my-3">
+                <article class="card shadow-b p-3 bg-primary-subtle border-0">
+                    <strong class="text-primary">Próximo hito: cierre de nóminas de octubre</strong>
+                    <small class="text-primary">Valida incidencias antes del 28 oct. El pago está previsto para el 30 oct y
+                        requiere aprobación de Finanzas.</small>
+                </article>
+            </div>
+        </main>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/graficas.js"></script>
+    <script src="js/resumen.js"></script>
+    <script>
+        // Datos dinámicos: graficas.js dibuja el canvas y resumen.js actualiza
+        // #plantillaActiva, #totalNomina y #progressDiv mediante DOM.
+        if (typeof window.iniciarGraficas === 'function') {
+            window.iniciarGraficas();
+        }
+    </script>
+</body>
+
+</html>

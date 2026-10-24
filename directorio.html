@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Directorio de empleados de Recursos Humanos: personas, departamentos, sedes y contratos.">
+    <title>RR.HH. · Directorio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body class="d-flex flex-row bg-gray">
+
+    <!-- Barra lateral -->
+    <aside class="d-flex flex-column vh-100 p-3 border-end bg-white shadow-r" style="min-width: 250px;">
+        <!-- Sección usuario -->
+        <section class="d-flex align-items-center gap-2 mb-4 pb-3 border-bottom">
+            <img src="https://randomuser.me/api/portraits/thumb/men/75.jpg" class="rounded-circle" width="36"
+                height="36" alt="Usuario">
+            <div class="overflow-hidden">
+                <strong class="d-block text-truncate">Usuario Prueba</strong>
+                <small class="text-body-tertiary d-block text-truncate">Admin</small>
+            </div>
+        </section>
+
+        <!-- Menú de navegación -->
+        <nav class="flex-grow-1">
+            <ul class="nav nav-pills flex-column gap-2">
+                <li id="resumen" class="nav-item rounded fw-bold">
+                    <a href="resumen.html" class="nav-link px-2">Resumen</a>
+                </li>
+                <li id="directorio" class="nav-item bg-primary-subtle rounded fw-bold">
+                    <a href="directorio.html" class="nav-link px-2" aria-current="page">Directorio</a>
+                </li>
+            </ul>
+        </nav>
+        <a class="btn btn-secondary bg-primary fw-bold" href="login.html">Cerrar sesión</a>
+    </aside>
+
+    <!-- Área de contenido principal -->
+    <div class="flex-grow-1 d-flex flex-column overflow-auto vh-100">
+        <!-- Header  -->
+        <header
+            class="sticky-top z-3 d-flex align-items-center justify-content-between p-3 mx-4 mt-0 rounded border-bottom shadow-b bg-white">
+            <h5 class="text-body-tertiary d-flex m-0">Horizon ><div class="text-black mx-1">Recursos humanos</div>
+            </h5>
+            <input class="form-control me-2 search-icon bg-gray border-0" type="search"
+                placeholder="Buscar en mi empresa..." style="width: 250px;" />
+        </header>
+
+        <!-- Contenido principal (antes pages/directorio.ejs) -->
+        <main class="flex-grow-1 px-4">
+            <!-- Titulo y Boton -->
+            <div class="container-fluid p-0 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1>Directorio de Empleados</h1>
+                        <p class="text-body-tertiary">El expediente de cada persona, conectado con el resto de tu ERP.</p>
+                    </div>
+                    <a class="btn btn-primary text-nowrap" href="#" role="button">+ Añadir empleado</a>
+                </div>
+            </div>
+
+            <!-- Tarjetas -->
+            <div class="container-fluid p-0">
+                <div class="row g-3">
+                    <!-- Card plantilla -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <article class="card shadow-b p-3 h-100">
+                            <section class="text-body-tertiary">Personas activas</section>
+                            <h1 id="directorioPersonasActivas">248</h1>
+                            <small class="text-success">En 3 sedes y 6 departamentos</small>
+                        </article>
+                    </div>
+                    <!-- Card rotación -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <article class="card shadow-b p-3 h-100">
+                            <section class="text-body-tertiary">Incorporaciones este mes</section>
+                            <h1>8</h1>
+                            <small class="text-success">2 planes todavía en curso</small>
+                        </article>
+                    </div>
+                    <!-- Card ausentismo -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <article class="card shadow-b p-3 h-100">
+                            <section class="text-body-tertiary">Contratos próximos a vencer</section>
+                            <h1>4</h1>
+                            <small class="text-success">En los próximos 60 días</small>
+                        </article>
+                    </div>
+                    <!-- Card coste nómina -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <article class="card shadow-b p-3 h-100">
+                            <section class="text-body-tertiary">Expedientes completos</section>
+                            <h1 id="directorioExpedientesCompletos">96 %</h1>
+                            <small class="text-success">10 expedientes por actualizar</small>
+                        </article>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dash board-->
+            <div class="card py-3 my-3 shadow-b">
+                <div class="container-fluid ">
+                    <!-- Mini NavBar Dash Board-->
+                    <ul class="d-flex gap-5 list-unstyled">
+                        <li>
+                            <a class="text-decoration-none text-reset" href="#">Todos los empelados -
+                                248</a>
+                        </li>
+                        <li>
+                            <a class="text-decoration-none text-reset" href="#">En incorporacion - 2</a>
+                        </li>
+                        <li>
+                            <a class="text-decoration-none text-reset" href="#">Archivados - 12</a>
+                        </li>
+                    </ul>
+                    <hr>
+                    <!-- Primera Linea de elementos Dash Board-->
+                    <ul class="d-flex gap-4 list-unstyled">
+                        <li>
+                            <input class="form-control bg-gray" type="search"
+                                placeholder="Nombre, ID o correo electronico" aria-label="Search"
+                                style="width: 350px; max-width: 100%;">
+                        </li>
+                        <li>
+                            <div class="dropdown">
+                                <button class="btn btn-light dropdown-toggle bg-gray" type="button"
+                                    id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Departamentos
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                    <li><a class="dropdown-item" href="#">Tecnología</a></li>
+                                    <li><a class="dropdown-item" href="#">Operaciones</a></li>
+                                    <li><a class="dropdown-item" href="#">Personas</a></li>
+                                    <li><a class="dropdown-item" href="#">Finanzas</a></li>
+                                    <li><a class="dropdown-item" href="#">Comercial</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="dropdown">
+                                <button class="btn btn-light dropdown-toggle bg-gray" type="button"
+                                    id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Sede
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
+                                    <li><a class="dropdown-item" href="#">Norte</a></li>
+                                    <li><a class="dropdown-item" href="#">Centro</a></li>
+                                    <li><a class="dropdown-item" href="#">Sur</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="dropdown">
+                                <button class="btn btn-light dropdown-toggle bg-gray" type="button"
+                                    id="dropdownMenuButton3" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Estado
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton3">
+                                    <li><a class="dropdown-item" href="#">Activo</a></li>
+                                    <li><a class="dropdown-item" href="#">En incorporacion</a></li>
+                                    <li><a class="dropdown-item" href="#">En ausencia</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                    <!-- Segunda Linea de elementos Dash Board-->
+                    <ul class="d-flex gap-4 list-unstyled align-items-center">
+                        <li>
+                            <div class="align-content-center">248 empleados</div>
+                        </li>
+                        <li>
+                            <label for="formFile" class="btn btn-primary">Subir archivo</label>
+                            <input type="file" id="formFile" hidden>
+                        </li>
+                        <li>
+                            <a class="btn btn-primary" href="#" type="button">Exportar</a>
+                        </li>
+                        <!-- TODO Insertar logo pertinente -->
+                        <li>
+                            <a class="btn btn-primary" href="#" type="button">Columnas</a>
+                        </li>
+                    </ul>
+                    <!-- Tabla -->
+                    <div class="container-fluid p-0">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">EMPLEADO</th>
+                                    <th scope="col">DEPARTAMENTO</th>
+                                    <th scope="col">PUESTO</th>
+                                    <th scope="col">SEDE</th>
+                                    <th scope="col">CONTRATO</th>
+                                    <th scope="col">ESTADO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div>Marta Soler</div>
+                                        <div>EMP-0042 - marta.soler@horizonte.example</div>
+                                    </td>
+                                    <td>Tecnología</td>
+                                    <td>Responsable de producto</td>
+                                    <td>Centro</td>
+                                    <td>Indefinido</td>
+                                    <td>Activo</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div>Ana García</div>
+                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                    </td>
+                                    <td>Tecnología</td>
+                                    <td>Responsable de producto</td>
+                                    <td>Centro</td>
+                                    <td>Indefinido</td>
+                                    <td>Activo</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div>Carlos Ruíz</div>
+                                        <div>EMP-0018 - carlos.ruiz@horizonte.example</div>
+                                    </td>
+                                    <td>Tecnología</td>
+                                    <td>Responsable de producto</td>
+                                    <td>Centro</td>
+                                    <td>Indefinido</td>
+                                    <td>Activo</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div>Diego Pardo</div>
+                                        <div>EMP-0087 - diego.pardo@horizonte.example</div>
+                                    </td>
+                                    <td>Tecnología</td>
+                                    <td>Responsable de producto</td>
+                                    <td>Centro</td>
+                                    <td>Indefinido</td>
+                                    <td>Activo</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div>Lucia Vega</div>
+                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                    </td>
+                                    <td>Tecnología</td>
+                                    <td>Responsable de producto</td>
+                                    <td>Centro</td>
+                                    <td>Indefinido</td>
+                                    <td>Activo</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div>Elena Torres</div>
+                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                    </td>
+                                    <td>Tecnología</td>
+                                    <td>Responsable de producto</td>
+                                    <td>Centro</td>
+                                    <td>Indefinido</td>
+                                    <td>Activo</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div>Pablo León</div>
+                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                    </td>
+                                    <td>Tecnología</td>
+                                    <td>Responsable de producto</td>
+                                    <td>Centro</td>
+                                    <td>Indefinido</td>
+                                    <td>Activo</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div>Sofia Martín</div>
+                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                    </td>
+                                    <td>Tecnología</td>
+                                    <td>Responsable de producto</td>
+                                    <td>Centro</td>
+                                    <td>Indefinido</td>
+                                    <td>Activo</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div>Javier Mora</div>
+                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                    </td>
+                                    <td>Tecnología</td>
+                                    <td>Responsable de producto</td>
+                                    <td>Centro</td>
+                                    <td>Indefinido</td>
+                                    <td>Activo</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div>Paula Rios</div>
+                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                    </td>
+                                    <td>Tecnología</td>
+                                    <td>Responsable de producto</td>
+                                    <td>Centro</td>
+                                    <td>Indefinido</td>
+                                    <td>Activo</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- TODO Footer de la DashBoard-->
+                    <div class="container-fluid">
+                        <div class="d-flex justify-content-between align-items-center g-2">
+                            <div>Mostrando 1-10 de 248 empleados</div>
+
+                            <!-- Navegador de Paginas del DashBoard -->
+                            <div>
+                                <div class="container-fluid">
+                                    <nav aria-label="Pagina de Navegacion">
+                                        <ul class="pagination justify-content-center">
+                                            <li class="page-item">
+                                                <a class="page-link" href="#" tabindex="-1">&lt;</a>
+                                            </li>
+                                            <li class="page-item"><a class="page-link" href="#">1</a></li>
+                                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                            <li class="page-item"><a class="page-link" href="#">...</a></li>
+                                            <li class="page-item"><a class="page-link" href="#">25</a></li>
+                                            <li class="page-item">
+                                                <a class="page-link" href="#">&gt;</a>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
