@@ -45,8 +45,7 @@ recursos_humanos/
 │   └── resumen.js      # Consumo de la API y actualización de KPIs
 ├── static/
 │   └── search.svg      # Icono del buscador
-├── README.md
-└── .gitignore
+└── README.md
 ```
 
 Todas las rutas a CSS, JavaScript e imágenes son **relativas**, por lo que el sitio funciona igual en la raíz de un dominio, en un subdirectorio o abierto desde el sistema de archivos.
