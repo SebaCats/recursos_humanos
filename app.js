@@ -3,56 +3,57 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import session from 'express-session';
 
-// 1. Recrear __dirname y __filename para ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-// Para poder leer los datos que vengan de un formulario de login (<form method="POST">)
-app.use(express.urlencoded({ extended: true }));
+const port = 3000;
+const apiBaseUrl = (process.env.API_URL || 'http://localhost:4000').replace(/\/$/, '');
 
-// 2. Configurar la sesión
+// Configuración de Express
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+// Configuración de sesiones
 app.use(session({
     secret: 'mi_clave_secreta', // Cambia esto por un texto seguro
     resave: false,
     saveUninitialized: false
 }));
 
-// 3. Crear el Middleware de Autenticación
-const protegerRuta = (req, res, next) => {
-    if (req.session.usuarioLogeado) {
-        next(); // Si está logeado, lo deja pasar
-    } else {
-        res.redirect('/login'); // Si no, lo patea al login
-    }
-};
-
-// Configurar EJS como motor de plantillas
+// Configuración de EJS
 app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'pages'));
 
-// Indicar que las vistas están en la carpeta 'src'
-app.set('views', path.join(__dirname, 'src'));
-
-// Configurar carpetas de archivos estáticos
+// Archivos públicos: CSS, JS e imágenes
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/static', express.static(path.join(__dirname, 'src', 'static')));
 
-// Rutas principales
-app.get(['/', '/resumen'], protegerRuta, (req, res) => {
-    res.render('index', { vista: 'pages/resumen' });
-});
+// Middleware de autenticación
+function protegerRuta(req, res, next) {
+    if (req.session?.usuarioLogeado) {
+        return next();
+    }
 
-app.get('/directorio', protegerRuta, (req, res) => {
-    res.render('index', { vista: 'pages/directorio' });
-});
+    // Las peticiones de API reciben 401, no una página HTML
+    if (req.path.startsWith('/api/')) {
+        return res.status(401).json({
+            error: 'Debes iniciar sesión'
+        });
+    }
 
-// Mostrar el formulario de login
+    return res.redirect('/login');
+}
+
+// Login
 app.get('/login', (req, res) => {
-    if (req.session.usuarioLogeado) return res.redirect('/'); // Si ya entró, no mostrar login
-    res.render('pages/login');
+    if (req.session?.usuarioLogeado) {
+        return res.redirect('/');
+    }
+
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Procesar el login (cuando el usuario envía sus datos)
+// Procesar login
 app.post('/login', (req, res) => {
     // Aquí validarías contra tu base de datos.
     // Por ahora, simulamos que el login fue exitoso automáticamente:
@@ -60,18 +61,75 @@ app.post('/login', (req, res) => {
     res.redirect('/');
 });
 
-// Ruta para cerrar sesión
+// Todas las páginas privadas
+app.get(['/', '/resumen'], protegerRuta, (req, res) => {
+    res.render('index', { vista: 'resumen' });
+});
+
+app.get('/directorio', protegerRuta, (req, res) => {
+    res.render('index', { vista: 'directorio' });
+});
+
+app.get('/api/empleadosByDepartamento', protegerRuta, async (req, res, next) => {
+    try {
+        const response = await fetch(
+            `${apiBaseUrl}/empleadosByDepartamento`
+        );
+
+        if (!response.ok) {
+            return res.status(response.status).json({
+                error: 'Error al obtener los empleados'
+            });
+        }
+
+        const datos = await response.json();
+        res.json(datos);
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.get('/api/totalSalario', protegerRuta, async (req, res, next) => {
+    try {
+        const response = await fetch(
+            `${apiBaseUrl}/totalSalario`
+        );
+
+        if (!response.ok) {
+            return res.status(response.status).json({
+                error: 'Error al obtener el total de salario'
+            });
+        }
+
+        const datos = await response.json();
+        res.json(datos);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Cerrar sesión
 app.get('/logout', (req, res) => {
     req.session.destroy();
     res.redirect('/login');
 });
 
-// Manejador 404
+// Página 404
 app.use((req, res) => {
-    res.status(404).render('index', {vista: 'pages/404'})
-})
+    res.status(404).render('404');
+});
 
-const port = 3000;
+// Manejo de errores
+app.use((error, req, res, next) => {
+    console.error(error);
+
+    if (res.headersSent) {
+        return next(error);
+    }
+
+    res.status(500).send('Error interno del servidor');
+});
+
 app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
 });
