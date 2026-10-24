@@ -1,6 +1,6 @@
 # Horizon · Recursos Humanos
 
-Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS**, **JavaScript** y **Bootstrap 5**. Incluye un resumen ejecutivo con indicadores y gráficas, un directorio de empleados y un formulario de login. Los datos de ejemplo se pueden sustituir por datos reales mediante JavaScript (DOM).
+Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS**, **JavaScript** y **Bootstrap 5**. Incluye un resumen ejecutivo con indicadores y gráficas, un directorio de empleados y un formulario de inicio de sesión conectado a un backend mediante sesiones con cookies.
 
 > Proyecto en fase de desarrollo: los empleados, indicadores y acciones de la interfaz son de ejemplo.
 
@@ -15,7 +15,9 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
   - Tarjetas de indicadores de personal.
   - Buscador y filtros por departamento, sede y estado.
   - Tabla de empleados con paginación (elementos visuales de ejemplo).
-- **Login** (`login.html`) y **página 404** (`404.html`) independientes.
+- **Inicio de sesión** (`login.html`) conectado a la API del backend.
+- **Validación de sesión** en las páginas del panel mediante `js/auth.js`.
+- **Página 404** (`404.html`) independiente.
 - **Estilos propios** sobre Bootstrap en `css/styles.css`.
 - **Sin proceso de build**: son archivos estáticos que se pueden abrir o servir directamente.
 
@@ -25,7 +27,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 | ------------- | ------------------------------------------------ |
 | HTML5         | Estructura de las páginas                        |
 | CSS3          | Estilos propios en `css/styles.css`              |
-| JavaScript    | Interacción y actualización del DOM              |
+| JavaScript    | Interacción, autenticación y actualización del DOM |
 | Bootstrap 5.3 | Maquetación y componentes (vía CDN)              |
 | Chart.js      | Gráficas del resumen (vía CDN)                   |
 
@@ -41,6 +43,8 @@ recursos_humanos/
 ├── css/
 │   └── styles.css      # Estilos y utilidades propias
 ├── js/
+│   ├── auth.js         # Comprueba la sesión antes de mostrar el panel
+│   ├── login.js        # Envía las credenciales al backend
 │   ├── graficas.js     # Inicialización de Chart.js (solo en el resumen)
 │   └── resumen.js      # Consumo de la API y actualización de KPIs
 ├── static/
@@ -48,7 +52,7 @@ recursos_humanos/
 └── README.md
 ```
 
-Todas las rutas a CSS, JavaScript e imágenes son **relativas**, por lo que el sitio funciona igual en la raíz de un dominio, en un subdirectorio o abierto desde el sistema de archivos.
+Algunas rutas de recursos y redirecciones parten de la raíz del dominio (`/`). La autenticación y los datos también apuntan actualmente a `http://localhost:3000`; para desplegar el frontend en otro dominio o subdirectorio, actualiza esas URLs y redirecciones en `js/auth.js`, `js/login.js` y `js/resumen.js`.
 
 ## Uso local
 
@@ -62,9 +66,9 @@ npx serve .
 python -m http.server 8080
 ```
 
-Luego abre `http://localhost:3000` (o `http://localhost:8080`) y navega a `index.html`, `resumen.html` o `directorio.html`.
+Sirve el frontend en un origen distinto al backend (por ejemplo, `http://localhost:8080`) y deja el backend disponible en `http://localhost:3000`. Abre `index.html`, `resumen.html` o `directorio.html` desde el servidor estático. El backend debe permitir solicitudes CORS desde el origen del frontend y el envío de credenciales (`credentials: include`).
 
-También puedes abrir `index.html` directamente con doble clic. En ese caso la gráfica funciona, pero las peticiones a `/api/...` fallarán porque no hay servidor ni backend disponible; los valores de ejemplo del HTML permanecen visibles.
+No abras las páginas con doble clic (`file://`): la sesión y las llamadas a la API requieren que el frontend se sirva por HTTP. Sin un backend disponible, la validación de sesión redirige al inicio de sesión y las peticiones de datos no se completan.
 
 ## Datos dinámicos con JavaScript (DOM)
 
@@ -88,25 +92,34 @@ document.getElementById('totalNomina').textContent = '$812.400.000';
 document.getElementById('totalPlantillaText').textContent = '320 personas - plantilla actual';
 ```
 
-`js/resumen.js` consume estas rutas relativas al mismo origen:
+`js/resumen.js` consume estas rutas del backend:
 
 ```text
-GET /api/empleadosByDepartamento  ->  [{ "nombre": "Tecnología", "cantidad": 75 }, ...]
-GET /api/totalSalario             ->  { "total": 707678740 }
+GET http://localhost:3000/api/empleadosByDepartamento  ->  [{ "nombre": "Tecnología", "cantidad": 75 }, ...]
+GET http://localhost:3000/api/totalSalario             ->  { "total": 707678740 }
 ```
 
-Si las peticiones fallan (por ejemplo, al abrir el archivo sin backend), el error se registra en la consola y se mantienen los valores estáticos del HTML.
+Ambas solicitudes envían las cookies de sesión. Si fallan, el error se registra en la consola y se mantienen los valores estáticos del HTML.
 
 ## Integración con un backend
 
-Este repositorio contiene únicamente el frontend estático. Para conectarlo con el backend de Recursos Humanos:
+Este repositorio contiene únicamente el frontend estático. La integración actual espera que el backend esté en `http://localhost:3000` y exponga:
 
-1. Sirve esta carpeta como raíz de archivos estáticos (`express.static` o equivalente).
-2. Publica las rutas `/api/empleadosByDepartamento` y `/api/totalSalario` desde el mismo origen.
-3. Si se mantiene la autenticación con sesión, protege esas rutas y sirve `login.html` en `/login`.
-4. Ajusta los enlaces de navegación (`resumen.html`, `directorio.html`, `login.html`) a las rutas que exponga el servidor, o configura redirecciones.
+| Método | Ruta | Comportamiento esperado |
+| ------ | ---- | ----------------------- |
+| `POST` | `/api/login` | Recibe `{ "usuario": "...", "password": "..." }`, valida las credenciales y establece una cookie de sesión. |
+| `GET` | `/api/check-session` | Responde exitosamente si la cookie corresponde a una sesión válida; de lo contrario, devuelve un estado no exitoso (por ejemplo, `401`). |
+| `GET` | `/api/empleadosByDepartamento` | Devuelve los empleados agrupados por departamento. |
+| `GET` | `/api/totalSalario` | Devuelve el total de salarios. |
 
-El backend anterior usaba EJS y servía `pages/` y `public/`; después de esta reorganización debe apuntar a la raíz del proyecto y servir los `.html` directamente.
+Para conectarlo:
+
+1. Sirve esta carpeta con un servidor estático, por ejemplo `express.static` o equivalente.
+2. Configura CORS en el backend para permitir el origen exacto del frontend y el envío de credenciales. La cookie de sesión debe tener atributos compatibles con el entorno, incluidos `SameSite` y `Secure`.
+3. Protege las rutas de datos con la misma sesión utilizada por `/api/check-session`.
+4. Si el backend no está en `http://localhost:3000`, cambia la URL en `js/auth.js`, `js/login.js` y `js/resumen.js`. Ajusta también las rutas absolutas de redirección (`/login.html` e `/index.html`) si el sitio no se publica en la raíz del dominio.
+
+El backend anterior usaba EJS y servía `pages/` y `public/`; debe servir los `.html` de este proyecto directamente.
 
 ## Despliegue en GitHub Pages
 
@@ -116,14 +129,14 @@ Al ser un sitio estático, se puede publicar directamente:
 2. En **Settings → Pages**, selecciona la rama y la carpeta raíz (`/`).
 3. La entrada será `index.html`.
 
-Ten en cuenta que GitHub Pages no ejecuta las rutas `/api/...`; para que los KPIs se actualicen necesitas desplegar el backend en otro servicio y cambiar las URLs de `js/resumen.js` o poner un proxy delante.
+GitHub Pages solo sirve el frontend y no ejecuta la API. Para usar autenticación y cargar datos allí, despliega el backend por separado, configura CORS y cookies para ambos orígenes y actualiza las URLs en los archivos JavaScript. La configuración actual apunta a `localhost`, por lo que no funcionará para visitantes del sitio publicado.
 
 ## Limitaciones conocidas
 
-- **Autenticación:** el formulario de login es visual; no valida credenciales ni crea sesión por sí solo.
+- **Autenticación:** el frontend envía las credenciales y valida la sesión, pero la autenticación real, la creación de la cookie y la autorización dependen del backend.
 - **Datos:** los empleados del directorio y la mayoría de los indicadores están codificados en el HTML.
 - **Interfaz:** "Añadir empleado", "Exportar", "Columnas", filtros y paginación son elementos visuales sin lógica.
-- **API:** las llamadas a `/api/...` requieren un backend o proxy en el mismo origen.
+- **API:** las llamadas requieren un backend disponible en `http://localhost:3000` (o la URL configurada) y CORS con credenciales cuando frontend y backend tienen orígenes distintos.
 - **Duplicación de layout:** al no haber motor de plantillas, la barra lateral y el header se repiten en `index.html`, `resumen.html` y `directorio.html`.
 
 ## Licencia
