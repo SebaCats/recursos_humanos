@@ -1,8 +1,14 @@
-const API_URL_EMPLEADOS = '/api/empleadosByDepartamento'
-const API_URL_TOTAL = '/api/totalSalario'
+const API_URL_EMPLEADOS = 'http://localhost:3000/api/empleadosByDepartamento'
+const API_URL_TOTAL = 'http://localhost:3000/api/totalSalario'
+
+// 2. Configuración OBLIGATORIA para enviar la cookie
+const fetchOptions = {
+    method: 'GET',
+    credentials: 'include' // <-- Si falta esto, siempre te dará error 401
+};
 
 async function empleadoPorDepartamento() {
-    const response = await fetch(API_URL_EMPLEADOS);
+    const response = await fetch(API_URL_EMPLEADOS, fetchOptions);
 
     if (!response.ok) {
         throw new Error(`Error ${response.status} al obtener los departamentos`);
@@ -12,7 +18,7 @@ async function empleadoPorDepartamento() {
 }
 
 async function totalSalario() {
-    const response = await fetch(API_URL_TOTAL);
+    const response = await fetch(API_URL_TOTAL, fetchOptions);
 
     if (!response.ok) {
         throw new Error(`Error ${response.status} al obtener el total de salario`);

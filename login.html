@@ -13,16 +13,16 @@
 	<div class="container-fluid m-0 p-0 min-vh-100 row">
 		<aside class="container-fluid col-4 bg-primary"></aside>
 		<main class="container-fluid col-8 d-flex justify-content-center align-items-center">
-			<form class="p-3" style="width: fit-content;" action="" method="post">
+			<form id="loginForm" class="p-3" style="width: fit-content;" action="" method="post">
 				<div class="mb-3">
 					<h1>Te damos la bienvenida</h1>
 					<span>Inicia sesión para continuar</span>
 				</div>
 				<div class="d-flex flex-column mb-3">
 					<label for="">Correo corporativo</label>
-					<input class="input-group-text text-start" type="email" placeholder="nombre@empresa.com">
+					<input id="email" class="input-group-text text-start" type="email" placeholder="nombre@empresa.com">
 					<label for="">Contraseña</label>
-					<input class="input-group-text text-start" type="password" placeholder="introduce tu contraseña">
+					<input id="password" class="input-group-text text-start" type="password" placeholder="introduce tu contraseña">
 				</div>
 				<div class="d-flex justify-content-between mb-3">
 					<div>
@@ -31,10 +31,12 @@
 					</div>
 					<span>¿Olvidaste tu contraseña?</span>
 				</div>
-				<button class="container-fluid btn bg-primary text-white fw-bold">Iniciar sesión -></button>
+				<button class="container-fluid btn bg-primary text-white fw-bold" type="submit">Iniciar sesión -></button>
+				<p id="mensajeError" style="color: red; display: none;"></p>
 			</form>
 		</main>
 	</div>
+	<script src="js/login.js"></script>
 </body>
 
 </html>
