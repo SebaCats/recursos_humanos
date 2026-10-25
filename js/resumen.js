@@ -1,13 +1,11 @@
 const API_URL_EMPLEADOS = 'http://localhost:3000/api/empleadosByDepartamento'
 const API_URL_TOTAL = 'http://localhost:3000/api/totalSalario'
 
-// 2. El backend valida el JWT del encabezado Authorization (no usa cookies)
+// 2. La sesión viaja en una cookie HttpOnly; el frontend no manipula el token
 function opcionesFetch() {
-    const token = localStorage.getItem('token');
-
     return {
         method: 'GET',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        credentials: 'include'
     };
 }
 
