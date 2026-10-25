@@ -3,7 +3,7 @@ document.getElementById('loginForm').addEventListener('submit', async (evento) =
     evento.preventDefault(); 
 
     // 2. Capturamos los datos que el usuario escribió
-    const usuario = document.getElementById('email').value;
+    const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const mensajeError = document.getElementById('mensajeError');
 
@@ -15,18 +15,23 @@ document.getElementById('loginForm').addEventListener('submit', async (evento) =
                 'Content-Type': 'application/json'
             },
             credentials: 'include', // OBLIGATORIO: Permite que el servidor nos envíe la cookie de sesión
-            body: JSON.stringify({ usuario, password }) // Enviamos los datos en formato JSON
+            body: JSON.stringify({ email, password }) // Enviamos los datos en formato JSON
         });
 
         const data = await response.json();
 
         // 4. Revisamos la respuesta del backend
         if (response.ok) {
-            // Login exitoso: El backend ya guardó la cookie, así que lo enviamos al index
+            // ¡Guardamos el token que viene en data.token!
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
+
+            // Redirigimos al index
             window.location.href = '/index.html';
         } else {
             // Login fallido: Mostramos el mensaje de error del backend
-            mensajeError.textContent = data.error || 'Credenciales incorrectas';
+            mensajeError.textContent = data.mensaje || data.error || 'Credenciales incorrectas';
             mensajeError.style.display = 'block';
         }
     } catch (error) {
