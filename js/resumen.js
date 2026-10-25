@@ -1,14 +1,18 @@
 const API_URL_EMPLEADOS = 'http://localhost:3000/api/empleadosByDepartamento'
 const API_URL_TOTAL = 'http://localhost:3000/api/totalSalario'
 
-// 2. Configuración OBLIGATORIA para enviar la cookie
-const fetchOptions = {
-    method: 'GET',
-    credentials: 'include' // <-- Si falta esto, siempre te dará error 401
-};
+// 2. El backend valida el JWT del encabezado Authorization (no usa cookies)
+function opcionesFetch() {
+    const token = localStorage.getItem('token');
+
+    return {
+        method: 'GET',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    };
+}
 
 async function empleadoPorDepartamento() {
-    const response = await fetch(API_URL_EMPLEADOS, fetchOptions);
+    const response = await fetch(API_URL_EMPLEADOS, opcionesFetch());
 
     if (!response.ok) {
         throw new Error(`Error ${response.status} al obtener los departamentos`);
@@ -18,7 +22,7 @@ async function empleadoPorDepartamento() {
 }
 
 async function totalSalario() {
-    const response = await fetch(API_URL_TOTAL, fetchOptions);
+    const response = await fetch(API_URL_TOTAL, opcionesFetch());
 
     if (!response.ok) {
         throw new Error(`Error ${response.status} al obtener el total de salario`);

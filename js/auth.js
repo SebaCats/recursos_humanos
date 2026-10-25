@@ -4,7 +4,7 @@ async function verificarSesion() {
 
     // Si no hay token localmente, lo mandamos al login de inmediato
     if (!token) {
-        window.location.href = '/login.html';
+        window.location.href = 'login.html';
         return;
     }
 
@@ -19,7 +19,7 @@ async function verificarSesion() {
         if (!response.ok) {
             // Si el token expiró o no es válido, limpiamos y mandamos al login
             localStorage.removeItem('token');
-            window.location.href = '/login.html';
+            window.location.href = 'login.html';
         } else {
             // Sesión válida: mostramos el contenido de la página index.html
             document.body.style.display = 'block';
@@ -30,5 +30,16 @@ async function verificarSesion() {
     }
 }
 
-// Ejecutar inmediatamente al cargar index.html
+// Cierre de sesión: elimina el token y vuelve al login.
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-logout]').forEach((enlace) => {
+        enlace.addEventListener('click', (evento) => {
+            evento.preventDefault();
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        });
+    });
+});
+
+// Ejecutar inmediatamente al cargar la página
 verificarSesion();

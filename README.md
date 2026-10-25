@@ -6,7 +6,8 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 
 ## Características
 
-**Resumen** (`resumen.html`):
+**Resumen** (`index.html`):
+- Página de entrada del panel.
 - Tarjetas de KPIs: plantilla activa, rotación, ausentismo y coste de nómina.
 - Gráfica de evolución de la plantilla con Chart.js.
 - Distribución por departamento actualizada desde la API con JavaScript.
@@ -49,8 +50,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 
 ```text
 recursos_humanos/
-├── index.html          # Entrada del panel (mismo contenido que resumen.html)
-├── resumen.html        # Panel ejecutivo de Recursos Humanos
+├── index.html          # Entrada del panel y vista de resumen
 ├── directorio.html     # Directorio de empleados
 ├── login.html          # Formulario de inicio de sesión
 ├── 404.html            # Página de error independiente
@@ -66,7 +66,7 @@ recursos_humanos/
 └── README.md
 ```
 
-Algunas rutas de recursos y redirecciones parten de la raíz del dominio (`/`). La autenticación y los datos apuntan actualmente a `http://localhost:3000`; para desplegar el frontend en otro dominio o subdirectorio, actualiza esas URLs y redirecciones en `js/auth.js`, `js/login.js` y `js/resumen.js`.
+Las rutas de recursos y las redirecciones son relativas, por lo que el frontend funciona tanto en la raíz del dominio como en un subdirectorio. La autenticación y los datos apuntan actualmente a `http://localhost:3000`; para desplegar el frontend con otro backend, actualiza esas URLs en `js/auth.js`, `js/login.js` y `js/resumen.js`.
 
 ---
 
@@ -76,13 +76,13 @@ No hay dependencias que instalar para visualizar el frontend. Sirve la carpeta c
 
 ```bash
 # Opción 1: Node.js
-npx serve .
+npx serve . -l 5500
 
 # Opción 2: Python
-python -m http.server 8080
+python -m http.server 5500
 ```
 
-Sirve el frontend en un origen distinto al backend (por ejemplo, `http://localhost:8080`) y deja el backend disponible en `http://localhost:3000`. Abre `index.html`, `resumen.html` o `directorio.html` desde el servidor estático. El backend debe permitir solicitudes CORS desde el origen del frontend.
+Sirve el frontend en un origen distinto al backend (por ejemplo, `http://localhost:5500`) y deja el backend disponible en `http://localhost:3000`. Abre `index.html` o `directorio.html` desde el servidor estático. El backend debe permitir solicitudes CORS desde el origen del frontend (por defecto acepta `http://localhost:5500` y `http://127.0.0.1:5500`).
 
 No abras las páginas con doble clic (`file://`): la validación de sesión y las llamadas a la API requieren que el frontend se sirva por HTTP. Sin un backend disponible, la validación de sesión redirige a `login.html` al no detectar un token válido.
 
@@ -93,25 +93,26 @@ No abras las páginas con doble clic (`file://`): la validación de sesión y la
 La autenticación se gestiona mediante tokens JWT con el siguiente flujo:
 
 1. **Inicio de sesión (`js/login.js`)**:
-   - Envía una petición `POST` a `http://localhost:3000/api/login` con `{ usuario, password }`.
+   - Envía una petición `POST` a `http://localhost:3000/api/login` con `{ email, password }`.
    - Si la respuesta es exitosa (`200 OK`), extrae `data.token` y lo almacena en el almacenamiento local del navegador:
      ```js
      localStorage.setItem('token', data.token);
      ```
-   - Redirige al usuario a `/index.html`.
+   - Redirige al usuario a `index.html`.
 
 2. **Verificación de sesión (`js/auth.js`)**:
-   - Obtiene el token guardado en `localStorage`. Si no existe, redirige inmediatamente a `/login.html`.
+   - Obtiene el token guardado en `localStorage`. Si no existe, redirige inmediatamente a `login.html`.
    - Realiza una petición `GET` a `http://localhost:3000/api/check-session` incluyendo la cabecera `Authorization`:
      ```js
      headers: {
        'Authorization': `Bearer ${token}`
      }
      ```
-   - Si la API responde con un estado no exitoso (ej. `401 Unauthorized`), se remueve el token de `localStorage` y se redirige a `/login.html`.
+   - Si la API responde con un estado no exitoso (ej. `401 Unauthorized`), se remueve el token de `localStorage` y se redirige a `login.html`.
 
 3. **Cierre de sesión**:
-   - Para cerrar sesión basta con eliminar la clave `token` de `localStorage` mediante `localStorage.removeItem('token')` y redirigir a `/login.html`.
+   - El enlace "Cerrar sesión" (`data-logout`) elimina la clave `token` de `localStorage` y redirige a `login.html`.
+   - La misma lógica se puede ejecutar manualmente con `localStorage.removeItem('token')`.
 
 ---
 
@@ -146,7 +147,7 @@ El frontend espera que el backend esté ejecutándose en `http://localhost:3000`
 
 | Método | Ruta | Comportamiento esperado |
 | ------ | ---- | ----------------------- |
-| `POST` | `/api/login` | Recibe `{ "usuario": "...", "password": "..." }`, valida las credenciales y responde con `{ "mensaje": "...", "token": "<jwt_token>" }`. |
+| `POST` | `/api/login` | Recibe `{ "email": "...", "password": "..." }`, valida las credenciales y responde con `{ "mensaje": "...", "token": "<jwt_token>" }`. |
 | `GET` | `/api/check-session` | Requiere middleware `protegerRuta` (valida el encabezado `Authorization: Bearer <token>`). Responde `200 OK` si el token es válido; de lo contrario devuelve `401`. |
 | `GET` | `/api/empleadosByDepartamento` | Ruta protegida. Devuelve los empleados agrupados por departamento. |
 | `GET` | `/api/totalSalario` | Ruta protegida. Devuelve el total acumulado de salarios. |
@@ -170,7 +171,7 @@ Al ser un sitio estático, se puede publicar directamente:
 - **Datos:** Los empleados del directorio y varios indicadores gráficos están codificados en el HTML como plantilla base.
 - **Interfaz:** Las funciones "Añadir empleado", "Exportar", "Columnas", filtros y paginación son elementos visuales sin lógica de backend integrada.
 - **API:** Requiere que el backend esté disponible en `http://localhost:3000` (o la URL configurada) habilitando CORS.
-- **Duplicación de layout:** Al no utilizar un motor de plantillas en el frontend, la barra lateral y la cabecera se repiten entre los archivos HTML.
+- **Duplicación de layout:** Al no utilizar un motor de plantillas en el frontend, la barra lateral y la cabecera se repiten entre `index.html` y `directorio.html`.
 
 ---
 

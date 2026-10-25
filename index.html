@@ -30,14 +30,14 @@
         <nav class="flex-grow-1">
             <ul class="nav nav-pills flex-column gap-2">
                 <li id="resumen" class="nav-item bg-primary-subtle rounded fw-bold">
-                    <a href="resumen.html" class="nav-link px-2" aria-current="page">Resumen</a>
+                    <a href="index.html" class="nav-link px-2" aria-current="page">Resumen</a>
                 </li>
                 <li id="directorio" class="nav-item rounded fw-bold">
                     <a href="directorio.html" class="nav-link px-2">Directorio</a>
                 </li>
             </ul>
         </nav>
-        <a class="btn btn-secondary bg-primary fw-bold" href="login.html">Cerrar sesión</a>
+        <a class="btn btn-secondary bg-primary fw-bold" href="login.html" data-logout>Cerrar sesión</a>
     </aside>
 
     <!-- Área de contenido principal -->
@@ -248,8 +248,8 @@
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="/js/graficas.js"></script>
-    <script src="/js/resumen.js"></script>
+    <script src="js/graficas.js"></script>
+    <script src="js/resumen.js"></script>
     <script>
         // Datos dinámicos: graficas.js dibuja el canvas y resumen.js actualiza
         // #plantillaActiva, #totalNomina y #progressDiv mediante DOM.

@@ -28,7 +28,7 @@ document.getElementById('loginForm').addEventListener('submit', async (evento) =
             }
 
             // Redirigimos al index
-            window.location.href = '/index.html';
+            window.location.href = 'index.html';
         } else {
             // Login fallido: Mostramos el mensaje de error del backend
             mensajeError.textContent = data.mensaje || data.error || 'Credenciales incorrectas';
