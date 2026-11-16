@@ -348,6 +348,78 @@
 
     </div>
 
+    <!-- Componente tipo Modal para Formulario-->
+    <div class="modal fade" id="formularioEstatico" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="staticBackdropLabel">Registro de Empleado</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="container">
+                        <div class="row justify-content-center align-items-center g-2">
+                            <div class="col-12 col-md-12">
+                                <label for="trabajadorNombre">Nombre</label>
+                                <input type="text" class="form-control" id="trabajadorNombre" maxlength="20">
+                            </div>
+                            <div class="col-12 col-md-12">
+                                <label for="trabajadorApellido">Primer Apellido</label>
+                                <input type="text" class="form-control" id="trabajadorApellido" maxlength="20">
+                            </div>
+                            <div class="col-12 col-md-12">
+                                <label for="trabajadorCorreo">Correo</label>
+                                <input type="email" class="form-control" id="trabajadorCorreo" maxlength="20" placeholder="@horizonte.example">
+                            </div>
+                            <div class="col-12 col-md-12">
+                                <label for="trabajadorPuesto">Puesto</label>
+                                <input type="text" class="form-control" id="trabajadorPuesto" maxlength="30">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="selectorSede">Ubicación Sede</label>
+                                <select class="form-select form-select-sm" id="selectorSede" aria-label=".form-select-sm example">
+                                    <option selected="">Seleccionar...</option>
+                                    <option value="1">Norte</option>
+                                    <option value="2">Centro</option>
+                                    <option value="3">Sur</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="selectorDepartamento">Departamento</label>
+                                <select class="form-select form-select-sm" id="selectorDepartamento" aria-label=".form-select-sm example">
+                                    <option selected="">Seleccionar...</option>
+                                    <option value="1">Tecnología</option>
+                                    <option value="2">Operaciones</option>
+                                    <option value="3">Personas</option>
+                                    <option value="4">Finanzas</option>
+                                    <option value="5">Comercial</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-12">
+                                <label for="selectorContrato">Contrato</label>
+                                <select class="form-select form-select-sm" id="selectorContrato" aria-label=".form-select-sm example">
+                                    <option selected="">Seleccionar...</option>
+                                    <option value="1">Indefinido</option>
+                                    <option value="2">Tomporal</option>
+                                </select>
+                            </div>
+                            <!-- TODO Rodrigo: Crear un select con opciones para el Estado del trabajador: Activo, En Incorporacion, En Ausencia-->
+                            <div class="col-12 col-md-12">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <!-- Cierra la pestaña simulando que el empleado se agregó con exito jeje-->
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Agregar Empleado</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
