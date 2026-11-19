@@ -1,3 +1,5 @@
+const API_BASE = window.HORIZON_API_BASE ?? ''
+
 document.getElementById('loginForm').addEventListener('submit', async (evento) => {
     // 1. Evita que la página intente recargarse al enviar el formulario
     evento.preventDefault();
@@ -9,7 +11,7 @@ document.getElementById('loginForm').addEventListener('submit', async (evento) =
 
     try {
         // 3. Enviamos los datos al backend
-        const response = await fetch('http://localhost:3000/login', {
+        const response = await fetch(`${API_BASE}/login`, {
             method: 'POST',
             credentials: 'include',
             headers: {

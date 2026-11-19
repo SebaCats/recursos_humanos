@@ -9,8 +9,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="css/styles.css">
-    <!--Comentado Temporalmente-->
-    <!-- <script src="js/auth.js"></script> -->
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
 </head>
 
 <body class="d-flex flex-row bg-gray">
@@ -110,11 +110,11 @@
                     <!-- Mini NavBar Dash Board-->
                     <ul class="d-flex gap-5 list-unstyled">
                         <li>
-                            <a class="text-decoration-none text-reset" href="#">Todos los empelados -
+                            <a class="text-decoration-none text-reset" href="#">Todos los empleados -
                                 248</a>
                         </li>
                         <li>
-                            <a class="text-decoration-none text-reset" href="#">En incorporacion - 2</a>
+                            <a class="text-decoration-none text-reset" href="#">En incorporación - 2</a>
                         </li>
                         <li>
                             <a class="text-decoration-none text-reset" href="#">Archivados - 12</a>
@@ -125,7 +125,7 @@
                     <ul class="d-flex gap-4 list-unstyled">
                         <li>
                             <input class="form-control bg-gray" type="search"
-                                placeholder="Nombre, ID o correo electronico" aria-label="Search"
+                                placeholder="Nombre, ID o correo electrónico" aria-label="Search"
                                 style="width: 350px; max-width: 100%;">
                         </li>
                         <li>
@@ -164,7 +164,7 @@
                                 </button>
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton3">
                                     <li><a class="dropdown-item" href="#">Activo</a></li>
-                                    <li><a class="dropdown-item" href="#">En incorporacion</a></li>
+                                    <li><a class="dropdown-item" href="#">En incorporación</a></li>
                                     <li><a class="dropdown-item" href="#">En ausencia</a></li>
                                 </ul>
                             </div>
@@ -237,7 +237,7 @@
                                 <tr>
                                     <td>
                                         <div>Diego Pardo</div>
-                                        <div>EMP-0087 - diego.pardo@horizonte.example</div>
+                                        <div>EMP-0091 - diego.pardo@horizonte.example</div>
                                     </td>
                                     <td>Tecnología</td>
                                     <td>Responsable de producto</td>
@@ -247,8 +247,8 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        <div>Lucia Vega</div>
-                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                        <div>Lucía Vega</div>
+                                        <div>EMP-0033 - lucia.vega@horizonte.example</div>
                                     </td>
                                     <td>Tecnología</td>
                                     <td>Responsable de producto</td>
@@ -259,7 +259,7 @@
                                 <tr>
                                     <td>
                                         <div>Elena Torres</div>
-                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                        <div>EMP-0056 - elena.torres@horizonte.example</div>
                                     </td>
                                     <td>Tecnología</td>
                                     <td>Responsable de producto</td>
@@ -270,7 +270,7 @@
                                 <tr>
                                     <td>
                                         <div>Pablo León</div>
-                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                        <div>EMP-0064 - pablo.leon@horizonte.example</div>
                                     </td>
                                     <td>Tecnología</td>
                                     <td>Responsable de producto</td>
@@ -280,8 +280,8 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        <div>Sofia Martín</div>
-                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                        <div>Sofía Martín</div>
+                                        <div>EMP-0072 - sofia.martin@horizonte.example</div>
                                     </td>
                                     <td>Tecnología</td>
                                     <td>Responsable de producto</td>
@@ -292,7 +292,7 @@
                                 <tr>
                                     <td>
                                         <div>Javier Mora</div>
-                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                        <div>EMP-0079 - javier.mora@horizonte.example</div>
                                     </td>
                                     <td>Tecnología</td>
                                     <td>Responsable de producto</td>
@@ -302,8 +302,8 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        <div>Paula Rios</div>
-                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                        <div>Paula Ríos</div>
+                                        <div>EMP-0095 - paula.rios@horizonte.example</div>
                                     </td>
                                     <td>Tecnología</td>
                                     <td>Responsable de producto</td>
@@ -322,7 +322,7 @@
                             <!-- Navegador de Paginas del DashBoard -->
                             <div>
                                 <div class="container-fluid">
-                                    <nav aria-label="Pagina de Navegacion">
+                                    <nav aria-label="Página de navegación">
                                         <ul class="pagination justify-content-center">
                                             <li class="page-item">
                                                 <a class="page-link" href="#" tabindex="-1">&lt;</a>
@@ -401,8 +401,12 @@
                                 <select class="form-select form-select-sm" id="selectorContrato" aria-label=".form-select-sm example">
                                     <option selected="">Seleccionar...</option>
                                     <option value="1">Indefinido</option>
-                                    <option value="2">Tomporal</option>
+                                    <option value="2">Temporal</option>
                                 </select>
+                            </div>
+                            <div class="col-12 col-md-12">
+                                <label for="trabajadorSalario">Salario</label>
+                                <input type="number" class="form-control" id="trabajadorSalario" placeholder="$553.553">
                             </div>
                             <!-- TODO Rodrigo: Crear un select con opciones para el Estado del trabajador: Activo, En Incorporacion, En Ausencia-->
                             <div class="col-12 col-md-12">

@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    { "source": "/health", "destination": "https://tu-backend.ejemplo.com/health" },
+    { "source": "/login", "destination": "https://tu-backend.ejemplo.com/login" },
+    { "source": "/logout", "destination": "https://tu-backend.ejemplo.com/logout" },
+    { "source": "/check-session", "destination": "https://tu-backend.ejemplo.com/check-session" },
+    { "source": "/employee/:path*", "destination": "https://tu-backend.ejemplo.com/employee/:path*" },
+    { "source": "/api/:path*", "destination": "https://tu-backend.ejemplo.com/api/:path*" }
+  ]
+}

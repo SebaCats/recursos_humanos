@@ -1,5 +1,7 @@
-const API_URL_EMPLEADOS = 'http://localhost:3000/api/empleadosByDepartamento'
-const API_URL_TOTAL = 'http://localhost:3000/api/totalSalario'
+const API_BASE = window.HORIZON_API_BASE ?? ''
+
+const API_URL_EMPLEADOS = `${API_BASE}/api/empleadosByDepartamento`
+const API_URL_TOTAL = `${API_BASE}/api/totalSalario`
 
 // 2. La sesión viaja en una cookie HttpOnly; el frontend no manipula el token
 function opcionesFetch() {

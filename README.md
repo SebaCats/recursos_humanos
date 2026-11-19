@@ -1,5 +1,7 @@
 # Horizon · Recursos Humanos
 
+> Copia de despliegue: consulta `../README.md` para Vercel y la API. La base del API se configura en `js/config.js` (vacía en Vercel, `http://localhost:3000` en local); `vercel.json` proxya las rutas al backend.
+
 Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS**, **JavaScript** y **Bootstrap 5**. Incluye un resumen ejecutivo con indicadores y gráficas, un directorio de empleados y autenticación mediante **cookie de sesión HttpOnly** emitida por el backend.
 
 > **Proyecto en desarrollo:** los endpoints de autenticación están terminados y probados. Los endpoints que alimentan los datos del resumen todavía están pendientes, por lo que la interfaz conserva valores de ejemplo.
@@ -8,7 +10,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 
 | Área | Estado |
 | ---- | ------ |
-| Login, logout y verificación de sesión | Terminado y probado |
+| Login, logout y verificación de sesión (`/login`, `/logout`, `/check-session`) | Terminado |
 | Endpoints de datos (`/api/empleadosByDepartamento`, `/api/totalSalario`) | Pendiente |
 | Resumen y directorio | Maquetación terminada; datos de ejemplo |
 | Formulario de login | Conectado al backend real |
@@ -33,9 +35,9 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 - Redirige al panel y muestra el mensaje del backend si las credenciales fallan.
 
 **Validación de sesión**:
-- Controlada en las páginas del panel mediante `js/auth.js`.
-- Consulta `GET /check-session` enviando la cookie con `credentials: 'include'`.
-- Si la sesión no es válida, redirige a `login.html`.
+- Controlada en las páginas del panel (`index.html` y `directorio.html`) mediante `js/auth.js`.
+- Consulta `GET http://localhost:3000/check-session` enviando la cookie con `credentials: 'include'`.
+- Si la sesión no es válida, redirige a `login.html`. El contenido se oculta con `visibility` para no romper el layout `d-flex` del `body`.
 
 **Cierre de sesión**:
 - El enlace "Cerrar sesión" (`data-logout`) envía `POST /logout`.
@@ -81,7 +83,7 @@ recursos_humanos/
 └── README.md
 ```
 
-Las rutas de recursos y las redirecciones son relativas, por lo que el frontend funciona tanto en la raíz del dominio como en un subdirectorio. La autenticación y los datos apuntan actualmente a `http://localhost:3000`; para desplegar el frontend con otro backend, actualiza esas URLs en `js/auth.js`, `js/login.js` y `js/resumen.js`.
+Las rutas de recursos y las redirecciones son relativas, por lo que el frontend funciona tanto en la raíz del dominio como en un subdirectorio. En esta copia las llamadas al API usan `window.HORIZON_API_BASE` (`js/config.js`): en local apuntan a `http://localhost:3000` y en Vercel son relativas, resueltas por `vercel.json`. No hace falta editar `js/auth.js`, `js/login.js` ni `js/resumen.js`.
 
 ---
 
@@ -105,16 +107,16 @@ No abras las páginas con doble clic (`file://`): la validación de sesión y la
 
 ## Autenticación por cookie de sesión
 
-El backend emite una cookie `access_token` con las marcas `HttpOnly` y `SameSite=Strict`. El frontend no lee ni guarda el token en `localStorage`: el navegador envía la cookie automáticamente gracias a `credentials: 'include'`.
+El backend emite una cookie `session-token` con las marcas `HttpOnly` y `SameSite=Strict` (vigencia de 1 hora). El frontend no lee ni guarda el token en `localStorage`: el navegador envía la cookie automáticamente gracias a `credentials: 'include'`.
 
 1. **Inicio de sesión (`js/login.js`)**:
    - Envía `POST http://localhost:3000/login` con `{ email, password }`.
-   - Si la respuesta es exitosa (`201 Created`), el backend establece la cookie de sesión y el frontend redirige a `index.html`.
+   - Si la respuesta es exitosa (`200 OK`), el backend establece la cookie de sesión y el frontend redirige a `index.html`.
    - Si falla, muestra el campo `message` de la respuesta (por ejemplo, credenciales incorrectas).
 
 2. **Verificación de sesión (`js/auth.js`)**:
    - Al cargar el panel, envía `GET http://localhost:3000/check-session` con `credentials: 'include'`.
-   - Si responde `200 OK`, muestra el contenido y registra el usuario autenticado en la consola.
+   - Si responde `200 OK` con `{ "user": ... }`, muestra el contenido y registra el usuario autenticado en la consola.
    - Si responde `401` o hay un error de red, redirige a `login.html`.
 
 3. **Cierre de sesión**:
@@ -156,9 +158,9 @@ El frontend espera que el backend esté ejecutándose en `http://localhost:3000`
 
 | Método | Ruta | Comportamiento |
 | ------ | ---- | -------------- |
-| `POST` | `/login` | Recibe `{ "email": "...", "password": "..." }`. Responde `201 Created` con los datos del usuario y establece la cookie `access_token` (`HttpOnly`, `SameSite=Strict`). |
-| `POST` | `/logout` | Invalida la sesión, elimina la cookie y responde `200 OK`. |
-| `GET` | `/check-session` | Devuelve `200 OK` con el usuario si la cookie es válida; `401` si no hay sesión. |
+| `POST` | `/login` | Recibe `{ "email": "...", "password": "..." }`. Responde `200 OK` y establece la cookie `session-token` (`HttpOnly`, `SameSite=Strict`). |
+| `POST` | `/logout` | Elimina la cookie y responde `200 OK`. |
+| `GET` | `/check-session` | Devuelve `200 OK` con `{ "user": ... }` si la cookie contiene un JWT válido; `401` si no hay sesión. |
 
 ### Endpoints pendientes
 

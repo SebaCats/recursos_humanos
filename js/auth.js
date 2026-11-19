@@ -1,9 +1,12 @@
+const API_BASE = window.HORIZON_API_BASE ?? ''
+
 async function verificarSesion() {
-    document.body.style.display = 'none'
+    // Ocultar sin modificar `display`: el body usa d-flex para el layout.
+    document.body.style.visibility = 'hidden'
 
     try {
         const response = await fetch(
-            'http://localhost:3000/check-session',
+            `${API_BASE}/check-session`,
             {
                 method: 'GET',
                 credentials: 'include'
@@ -18,7 +21,7 @@ async function verificarSesion() {
         const data = await response.json()
         console.log('Usuario autenticado:', data.user)
 
-        document.body.style.display = 'block'
+        document.body.style.visibility = 'visible'
     } catch (error) {
         console.error('Error validando el token:', error)
         window.location.replace('./login.html')
@@ -33,7 +36,7 @@ async function cerrarSesion() {
 
             try {
                 const response = await fetch(
-                    'http://localhost:3000/logout',
+                    `${API_BASE}/logout`,
                     {
                         method: 'POST',
                         credentials: 'include'
