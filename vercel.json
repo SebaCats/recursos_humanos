@@ -1,10 +1,29 @@
+
 {
   "rewrites": [
-    { "source": "/health", "destination": "https://tu-backend.ejemplo.com/health" },
-    { "source": "/login", "destination": "https://tu-backend.ejemplo.com/login" },
-    { "source": "/logout", "destination": "https://tu-backend.ejemplo.com/logout" },
-    { "source": "/check-session", "destination": "https://tu-backend.ejemplo.com/check-session" },
-    { "source": "/employee/:path*", "destination": "https://tu-backend.ejemplo.com/employee/:path*" },
-    { "source": "/api/:path*", "destination": "https://tu-backend.ejemplo.com/api/:path*" }
+    {
+      "source": "/health",
+      "destination": "https://backend-rh-vy7d.vercel.app/health"
+    },
+    {
+      "source": "/login",
+      "destination": "https://backend-rh-vy7d.vercel.app/login"
+    },
+    {
+      "source": "/logout",
+      "destination": "https://backend-rh-vy7d.vercel.app/logout"
+    },
+    {
+      "source": "/check-session",
+      "destination": "https://backend-rh-vy7d.vercel.app/check-session"
+    },
+    {
+      "source": "/employee/:path*",
+      "destination": "https://backend-rh-vy7d.vercel.app/employee/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://backend-rh-vy7d.vercel.app/api/:path*"
+    }
   ]
 }
