@@ -1,29 +1,18 @@
-
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/health",
-      "destination": "https://backend-rh-vy7d.vercel.app/health"
-    },
+      "source": "/:path((?:health|login|logout|check-session)|(?:(?:api|employee)/.*))",
+      "destination": "https://backend-rh-vy7d.vercel.app/:path"
+    }
+  ],
+  "headers": [
     {
-      "source": "/login",
-      "destination": "https://backend-rh-vy7d.vercel.app/login"
-    },
-    {
-      "source": "/logout",
-      "destination": "https://backend-rh-vy7d.vercel.app/logout"
-    },
-    {
-      "source": "/check-session",
-      "destination": "https://backend-rh-vy7d.vercel.app/check-session"
-    },
-    {
-      "source": "/employee/:path*",
-      "destination": "https://backend-rh-vy7d.vercel.app/employee/:path*"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "https://backend-rh-vy7d.vercel.app/api/:path*"
+      "source": "/:path((?:health|login|logout|check-session)|(?:(?:api|employee)/.*))",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "x-vercel-enable-rewrite-caching", "value": "0" }
+      ]
     }
   ]
 }
