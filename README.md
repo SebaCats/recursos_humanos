@@ -4,15 +4,16 @@
 
 Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS**, **JavaScript** y **Bootstrap 5**. Incluye un resumen ejecutivo con indicadores y gráficas, un directorio de empleados y autenticación mediante **cookie de sesión HttpOnly** emitida por el backend.
 
-> **Proyecto en desarrollo:** los endpoints de autenticación están terminados y probados. Los endpoints que alimentan los datos del resumen todavía están pendientes, por lo que la interfaz conserva valores de ejemplo.
+> **Proyecto en desarrollo:** la autenticación y los endpoints que alimentan el resumen están terminados. El directorio y el formulario de alta siguen siendo elementos visuales de ejemplo.
 
 ## Estado actual
 
 | Área | Estado |
 | ---- | ------ |
 | Login, logout y verificación de sesión (`/login`, `/logout`, `/check-session`) | Terminado |
-| Endpoints de datos (`/api/empleadosByDepartamento`, `/api/totalSalario`) | Pendiente |
-| Resumen y directorio | Maquetación terminada; datos de ejemplo |
+| Endpoints de datos (`/api/empleadosByDepartamento`, `/api/totalSalario`) | Terminado |
+| Resumen | Conectado a la API real para plantilla, distribución por departamento y nómina |
+| Directorio | Maquetación terminada; datos de ejemplo |
 | Formulario de login | Conectado al backend real |
 
 ## Características
@@ -125,18 +126,16 @@ El backend emite una cookie `session-token` con las marcas `HttpOnly` y `SameSit
 
 ---
 
-## Datos dinámicos (en desarrollo)
+## Datos dinámicos
 
-Los endpoints que alimentan el resumen todavía no están implementados. `js/resumen.js` ya está preparado para consumirlos con la cookie de sesión:
+El resumen consume estos endpoints con la cookie de sesión (protegidos por JWT):
 
 ```text
 GET http://localhost:3000/api/empleadosByDepartamento  ->  [{ "nombre": "Tecnología", "cantidad": 75 }, ...]
 GET http://localhost:3000/api/totalSalario             ->  { "total": 707678740 }
 ```
 
-> Estas rutas y formatos son una propuesta y pueden cambiar cuando se implementen los endpoints.
-
-Mientras los endpoints no existan, las solicitudes fallan, el error se registra en la consola y se conservan los valores de ejemplo del HTML.
+Si alguna petición falla, el error se registra en la consola y se conservan los valores de ejemplo del HTML.
 
 Elementos que se actualizarán cuando la API esté disponible:
 
@@ -161,13 +160,10 @@ El frontend espera que el backend esté ejecutándose en `http://localhost:3000`
 | `POST` | `/login` | Recibe `{ "email": "...", "password": "..." }`. Responde `200 OK` y establece la cookie `session-token` (`HttpOnly`, `SameSite=Strict`). |
 | `POST` | `/logout` | Elimina la cookie y responde `200 OK`. |
 | `GET` | `/check-session` | Devuelve `200 OK` con `{ "user": ... }` si la cookie contiene un JWT válido; `401` si no hay sesión. |
+| `GET` | `/api/empleadosByDepartamento` | Devuelve `[{ "nombre": "...", "cantidad": 75 }, ...]` con los contratos agrupados por departamento. |
+| `GET` | `/api/totalSalario` | Devuelve `{ "total": 707678740 }` con la suma de salarios; `0` si no hay contratos. |
 
-### Endpoints pendientes
-
-| Método | Ruta | Comportamiento esperado |
-| ------ | ---- | ----------------------- |
-| `GET` | `/api/empleadosByDepartamento` | Devuelve los empleados agrupados por departamento. |
-| `GET` | `/api/totalSalario` | Devuelve el total acumulado de salarios. |
+Ambas rutas `/api/*` requieren sesión válida y están incluidas en el proxy de `vercel.json`.
 
 ---
 
@@ -179,13 +175,13 @@ Al ser un sitio estático, se puede publicar directamente:
 2. En **Settings → Pages**, selecciona la rama y la carpeta raíz (`/`).
 3. La página de entrada será `index.html`.
 
-> **Nota:** GitHub Pages solo sirve archivos estáticos. La autenticación por cookie requiere desplegar el backend por separado y configurar CORS con credenciales. Si frontend y backend quedan en dominios distintos, la cookie debe usar `SameSite=None; Secure` y ambos deben servirse por HTTPS. Los endpoints de datos todavía están pendientes.
+> **Nota:** GitHub Pages solo sirve archivos estáticos. La autenticación por cookie requiere desplegar el backend por separado y configurar CORS con credenciales. Si frontend y backend quedan en dominios distintos, la cookie debe usar `SameSite=None; Secure` y ambos deben servirse por HTTPS.
 
 ---
 
 ## Limitaciones conocidas
 
-- **Datos:** los endpoints de datos no están terminados; el resumen y el directorio usan valores de ejemplo.
+- **Datos:** el resumen usa datos reales; el directorio sigue usando valores de ejemplo.
 - **Interfaz:** las funciones "Añadir empleado", "Exportar", "Columnas", filtros y paginación son elementos visuales sin lógica de backend integrada.
 - **API:** requiere que el backend esté disponible en `http://localhost:3000` (o la URL configurada) con CORS y credenciales habilitados.
 - **Sesión:** la cookie es `HttpOnly`, por lo que el frontend no puede leerla; el estado se consulta con `/check-session`.
