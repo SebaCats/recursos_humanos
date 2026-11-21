@@ -4,33 +4,34 @@
 
 Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS**, **JavaScript** y **Bootstrap 5**. Incluye un resumen ejecutivo con indicadores y gráficas, un directorio de empleados y autenticación mediante **cookie de sesión HttpOnly** emitida por el backend.
 
-> **Proyecto en desarrollo:** el frontend ya consume la autenticación, el resumen, el directorio y el alta de empleados. Quedan como elementos visuales la gráfica de evolución, los filtros avanzados, la paginación y las acciones de exportar/columnas.
+> **Proyecto en desarrollo:** el frontend consume autenticación, catálogos, reportes, directorio, detalle de empleado y alta. Quedan como elementos visuales la paginación, el filtro de estado, "Exportar", "Columnas" y las secciones de decisiones/actividad.
 
 ## Estado actual
 
 | Área | Estado |
 | ---- | ------ |
 | Login, logout y verificación de sesión (`/login`, `/logout`, `/check-session`) | Terminado |
-| Endpoints de datos (`/api/empleadosByDepartamento`, `/api/totalSalario`) | Terminado |
-| Resumen | Conectado a la API real para plantilla, distribución por departamento y nómina |
-| Directorio | Conectado a `GET /employee/getAll` (búsqueda local incluida) |
-| Formulario de alta | Conectado a `POST /employee/create` |
+| Endpoints de datos y reportes (`/api/*`) | Terminado |
+| Resumen | Conectado a `/api/resumen`, evolución, distribución y nómina real |
+| Directorio | Conectado a `GET /employee/getAll`, catálogos, filtros y detalle por id |
+| Formulario de alta | Conectado a `POST /employee/create` con catálogos dinámicos |
 | Formulario de login | Conectado al backend real |
 
 ## Características
 
 **Resumen** (`index.html`):
 - Página de entrada del panel.
-- Tarjetas de KPIs: plantilla activa, rotación, ausentismo y coste de nómina.
-- Gráfica de evolución de la plantilla con Chart.js.
-- Distribución por departamento construida con `GET /api/empleadosByDepartamento`.
+- Plantilla activa y cobertura desde `GET /api/resumen`; nómina desde `GET /api/totalSalario`.
+- Gráfica de altas de contrato con Chart.js alimentada por `GET /api/evolucionContrataciones`.
+- Distribución por departamento, sedes, roles y tipos de contrato desde `/api/*`.
+- Nómina por departamento construida con `GET /api/salarioByDepartamento`.
 - Bandeja de decisiones y actividad reciente (datos de ejemplo).
 
 **Directorio** (`directorio.html`):
-- Tarjetas de indicadores de personal; la plantilla se calcula con `GET /employee/getAll`.
-- Buscador que filtra la tabla por nombre, correo o ID.
-- Tabla cargada desde la API; los filtros de departamento, sede y estado siguen siendo visuales.
-- Modal "Añadir empleado" conectado a `POST /employee/create`; muestra la contraseña temporal cuando el backend la genera.
+- Tarjetas de indicadores alimentadas por `/api/resumen`, `/api/evolucionContrataciones` y `/api/empleadosBySede`.
+- Buscador que filtra por nombre, correo o ID, más filtros funcionales de departamento, sede y contrato.
+- Tabla cargada desde `GET /employee/getAll`; al pulsar un nombre se consulta `GET /employee/getById/:id`.
+- Modal "Añadir empleado" con sedes, departamentos, tipos de contrato y puestos cargados desde `GET /api/catalogos`. Envía `POST /employee/create` y muestra la contraseña temporal.
 
 **Inicio de sesión** (`login.html`):
 - Envía las credenciales a `POST /login`.
@@ -132,24 +133,38 @@ El backend emite una cookie `session-token` con las marcas `HttpOnly` y `SameSit
 
 ## Datos dinámicos
 
-El resumen consume estos endpoints con la cookie de sesión (protegidos por JWT):
+Todas las peticiones pasan por `window.HORIZON_API` (`js/api.js`) y envían la cookie de sesión. En local usan `http://localhost:3000`; en Vercel son relativas y `vercel.json` las proxya al backend.
+
+Endpoints consumidos por el panel:
 
 ```text
-GET http://localhost:3000/api/empleadosByDepartamento  ->  [{ "nombre": "Tecnología", "cantidad": 75 }, ...]
-GET http://localhost:3000/api/totalSalario             ->  { "total": 707678740 }
+GET /api/resumen                     -> { totalEmployees, totalContracts, totalDepartments, totalSedes, averageSalary }
+GET /api/totalSalario                -> { "total": 2070000 }
+GET /api/empleadosByDepartamento     -> [{ "nombre": "Tecnología", "cantidad": 1 }, ...]
+GET /api/empleadosBySede             -> [{ "nombre": "NORTH", "cantidad": 1 }, ...]
+GET /api/empleadosByRole             -> [{ "nombre": "GUEST", "cantidad": 2 }, ...]
+GET /api/empleadosByContractType     -> [{ "nombre": "Indefinido", "cantidad": 1 }, ...]
+GET /api/salarioByDepartamento       -> [{ "nombre": "Tecnología", "sede": "SOUTH", "total": 1200000 }, ...]
+GET /api/evolucionContrataciones     -> [{ "mes": "2026-11", "cantidad": 2 }, ...]
+GET /api/catalogos                   -> { roles, sedes, departments, contractTypes, positions }
+GET /employee/getAll                 -> { "employees": [...] }
+GET /employee/getById/:id            -> { "employee": {...} }
+POST /employee/create                -> { "result": { "temporaryPassword": "..." } }
 ```
 
-Si alguna petición falla, el error se registra en la consola y se conservan los valores de ejemplo del HTML.
-
-Elementos que se actualizarán cuando la API esté disponible:
+Si alguna petición falla se registra en consola; las secciones afectadas muestran guiones o valores vacíos en lugar de datos inventados.
 
 | Elemento | ID | Archivo que lo actualiza |
 | -------- | -- | ------------------------ |
-| Plantilla activa | `plantillaActiva` | `js/resumen.js` |
+| Plantilla activa y detalle | `plantillaActiva`, `plantillaDetalle` | `js/resumen.js` |
 | Total de nómina | `totalNomina` | `js/resumen.js` |
-| Texto de plantilla | `totalPlantillaText` | `js/resumen.js` |
 | Barras por departamento | `progressDiv` | `js/resumen.js` |
-| Gráfica de evolución | `myChart` | `js/graficas.js` |
+| Nómina por departamento | `nominaPorDepartamento` | `js/resumen.js` |
+| Distribución por sede/rol/contrato | `distribucionDetalle` | `js/resumen.js` |
+| Gráfica de altas | `myChart`, `evolucionDetalle` | `js/graficas.js` + `js/resumen.js` |
+| KPIs del directorio | `directorioPersonasActivas`, `directorioCobertura`, `directorioIncorporaciones` | `js/directorio.js` |
+| Filtros y catálogos | `listaFiltro*`, `selectorSede`, `selectorDepartamento`, `selectorContrato`, `listaPuestos` | `js/directorio.js` |
+| Detalle de empleado | `detalleEmpleado` | `js/directorio.js` |
 
 ---
 
@@ -164,10 +179,16 @@ El frontend espera que el backend esté ejecutándose en `http://localhost:3000`
 | `POST` | `/login` | Recibe `{ "email": "...", "password": "..." }`. Responde `200 OK` y establece la cookie `session-token` (`HttpOnly`, `SameSite=Strict`). |
 | `POST` | `/logout` | Elimina la cookie y responde `200 OK`. |
 | `GET` | `/check-session` | Devuelve `200 OK` con `{ "user": ... }` si la cookie contiene un JWT válido; `401` si no hay sesión. |
-| `GET` | `/api/empleadosByDepartamento` | Devuelve `[{ "nombre": "...", "cantidad": 75 }, ...]` con los contratos agrupados por departamento. |
-| `GET` | `/api/totalSalario` | Devuelve `{ "total": 707678740 }` con la suma de salarios; `0` si no hay contratos. |
-| `GET` | `/employee/getAll` | Devuelve `{ "employees": [{ "name": "...", "email": "..." }] }`. Alimenta la tabla del directorio. |
-| `POST` | `/employee/create` | Alta de empleado y contrato. Si no se envía `password`, la respuesta incluye `temporaryPassword`. |
+| `GET` | `/api/empleadosByDepartamento` | `[{ "nombre": "...", "cantidad": 75 }, ...]`. Alimenta las barras del resumen. |
+| `GET` | `/api/totalSalario` | `{ "total": 707678740 }`. Suma de salarios; `0` si no hay contratos. |
+| `GET` | `/api/resumen` | Totales de empleados, contratos, departamentos, sedes y salario promedio. |
+| `GET` | `/api/empleadosBySede`, `/api/empleadosByRole`, `/api/empleadosByContractType` | Conteos con `{ nombre, cantidad }` para KPIs y distribución. |
+| `GET` | `/api/salarioByDepartamento` | `[{ nombre, sede, total }]`. Nómina agrupada por departamento y sede. |
+| `GET` | `/api/evolucionContrataciones` | `[{ mes, cantidad }]` de los últimos 12 meses. Alimenta la gráfica. |
+| `GET` | `/api/catalogos` | Roles, sedes, departamentos, tipos de contrato y puestos para el formulario y filtros. |
+| `GET` | `/employee/getAll` | `{ "employees": [...] }` con los datos completos del contrato, departamento, sede y rol. |
+| `GET` | `/employee/getById/:id` | `{ "employee": {...} }`. Alimenta el modal de detalle. |
+| `POST` | `/employee/create` | Alta de empleado y contrato. Si no se envía `password`, la respuesta incluye `result.temporaryPassword`. |
 
 Todas las rutas anteriores, salvo `/login` y `/logout`, requieren sesión válida. `vercel.json` las proxya al backend con una sola regla y les aplica `Cache-Control: no-store`.
 
@@ -187,9 +208,9 @@ Al ser un sitio estático, se puede publicar directamente:
 
 ## Limitaciones conocidas
 
-- **Datos:** el resumen, la tabla del directorio y el alta usan datos reales; la gráfica de evolución y las tarjetas de rotación/ausentismo siguen siendo ejemplos.
-- **Directorio:** `/employee/getAll` todavía solo devuelve `name` y `email`, por lo que las columnas de departamento, puesto, sede y contrato aparecen como `—` hasta que el backend las incluya.
-- **Interfaz:** "Exportar", "Columnas", los filtros por departamento/sede/estado y la paginación siguen siendo elementos visuales.
+- **Datos:** el resumen, la gráfica de altas, el directorio, los catálogos y el alta usan datos reales. Las tarjetas de rotación/ausentismo, la bandeja de decisiones y la actividad reciente siguen siendo ejemplos (la BD no registra bajas ni ausencias).
+- **Directorio:** los filtros de departamento, sede y contrato funcionan; el filtro de estado, "Exportar", "Columnas" y la paginación siguen siendo elementos visuales.
+- **Contratos:** la BD no tiene fecha de vencimiento, por lo que la tarjeta "Contratos próximos a vencer" no se calcula desde la API.
 - **API:** requiere que el backend esté disponible en `http://localhost:3000` (o la URL configurada) con CORS y credenciales habilitados.
 - **Sesión:** la cookie es `HttpOnly`, por lo que el frontend no puede leerla; el estado se consulta con `/check-session`.
 - **Duplicación de layout:** al no utilizar un motor de plantillas en el frontend, la barra lateral y la cabecera se repiten entre `index.html` y `directorio.html`.
