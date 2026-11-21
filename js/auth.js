@@ -1,60 +1,38 @@
-const API_BASE = window.HORIZON_API_BASE ?? ''
-
 async function verificarSesion() {
-    // Ocultar sin modificar `display`: el body usa d-flex para el layout.
-    document.body.style.visibility = 'hidden'
-
     try {
-        const response = await fetch(
-            `${API_BASE}/check-session`,
-            {
-                method: 'GET',
-                credentials: 'include'
-            }
-        )
-
-        if (!response.ok) {
-            window.location.replace('./login.html')
-            return
-        }
-
-        const data = await response.json()
+        const data = await window.HORIZON_API.checkSession()
         console.log('Usuario autenticado:', data.user)
-
         document.body.style.visibility = 'visible'
     } catch (error) {
-        console.error('Error validando el token:', error)
-        window.location.replace('./login.html')
+        console.error('Error validando la sesión:', error)
+        // request() ya redirige cuando el fallo es un 401. Si es un error de
+        // red u otro estado, redirigimos también para no dejar el panel oculto.
+        if (error.status !== 401) {
+            window.location.replace('./login.html')
+        }
     }
 }
 
 async function cerrarSesion() {
     document.querySelectorAll('[data-logout]').forEach((enlace) => {
         enlace.addEventListener('click', async (evento) => {
-            // detiene el direccionamiento del boton para ejecutar el fetch y luego lo hace
-            evento.preventDefault();
+            evento.preventDefault()
 
             try {
-                const response = await fetch(
-                    `${API_BASE}/logout`,
-                    {
-                        method: 'POST',
-                        credentials: 'include'
-                    }
-                );
-
-                if (!response.ok) {
-                    console.error('No se pudo cerrar la sesión');
-                }
+                await window.HORIZON_API.logout()
             } catch (error) {
-                console.error('Error al cerrar sesión:', error);
+                console.error('Error al cerrar sesión:', error)
             } finally {
-                window.location.replace('./login.html');
+                window.location.replace('./login.html')
             }
-        });
-    });
+        })
+    })
 }
 
-document.addEventListener('DOMContentLoaded', verificarSesion)
-
-document.addEventListener('DOMContentLoaded', cerrarSesion);
+document.addEventListener('DOMContentLoaded', () => {
+    // Oculta el panel mientras se valida la sesión. No tocamos `display`
+    // porque el body usa d-flex para el layout.
+    document.body.style.visibility = 'hidden'
+    verificarSesion()
+    cerrarSesion()
+})
