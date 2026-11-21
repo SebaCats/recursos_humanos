@@ -68,8 +68,27 @@ window.HORIZON_API = Object.freeze({
 
     getEmployees: () => request('/employee/getAll'),
 
+    getEmployeeById: (id) => request(`/employee/getById/${encodeURIComponent(id)}`),
+
     createEmployee: (empleado) => request('/employee/create', {
         method: 'POST',
         body: empleado
-    })
+    }),
+
+    // Catálogos: una llamada agrupada para formularios y filtros. Las rutas
+    // individuales quedan disponibles para cuando se necesite solo una lista.
+    getCatalogos: () => request('/api/catalogos'),
+    getRoles: () => request('/api/catalogos/roles'),
+    getSedes: () => request('/api/catalogos/sedes'),
+    getDepartments: () => request('/api/catalogos/departments'),
+    getContractTypes: () => request('/api/catalogos/contractTypes'),
+    getPositions: () => request('/api/catalogos/positions'),
+
+    // Reportes del panel. Todos devuelven el payload directo.
+    getResumen: () => request('/api/resumen'),
+    getEmpleadosBySede: () => request('/api/empleadosBySede'),
+    getEmpleadosByRole: () => request('/api/empleadosByRole'),
+    getEmpleadosByContractType: () => request('/api/empleadosByContractType'),
+    getSalarioByDepartamento: () => request('/api/salarioByDepartamento'),
+    getEvolucionContrataciones: () => request('/api/evolucionContrataciones')
 })
