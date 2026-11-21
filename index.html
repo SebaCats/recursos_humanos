@@ -69,8 +69,8 @@
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Plantilla activa</section>
-                            <h1 id="plantillaActiva">250</h1>
-                            <small class="text-success">+5 personas respecto a septiembre</small>
+                            <h1 id="plantillaActiva">—</h1>
+                            <small id="plantillaDetalle" class="text-success">Cargando detalle...</small>
                         </article>
                     </div>
                     <!-- Card rotación -->
@@ -108,12 +108,12 @@
                         <article class="card shadow-b p-3 h-100">
                             <section>
                                 <h4>Evolución de la plantilla</h4>
-                                <small class="text-body-tertiary">Personas activas al cierre de cada mes</small>
+                                <small class="text-body-tertiary">Altas de contrato por mes (últimos 12 meses)</small>
                             </section>
                             <canvas style="max-height: 250px;" id="myChart" role="img"
                                 aria-label="Evolución mensual de la plantilla activa"></canvas>
                             <div class="d-flex justify-content-between h-100 align-items-end">
-                                <small class="text-body-tertiary">Altas en octubre: 8 - Bajas: 4</small>
+                                <small id="evolucionDetalle" class="text-body-tertiary">Cargando altas...</small>
                                 <small class="text-primary">Ver movimiento de plantilla →</small>
                             </div>
                         </article>
@@ -170,6 +170,8 @@
                                     <div class="progress-bar" style="width: 8%"></div>
                                 </div>
                             </div>
+                            <div id="nominaPorDepartamento" class="mt-3 small text-body-tertiary"></div>
+                            <div id="distribucionDetalle" class="mt-1 small text-body-tertiary"></div>
                         </article>
                     </div>
                     <!-- Card decisiones -->
@@ -255,13 +257,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/graficas.js"></script>
     <script src="js/resumen.js"></script>
-    <script>
-        // Datos dinámicos: graficas.js dibuja el canvas y resumen.js actualiza
-        // #plantillaActiva, #totalNomina y #progressDiv mediante DOM.
-        if (typeof window.iniciarGraficas === 'function') {
-            window.iniciarGraficas();
-        }
-    </script>
 </body>
 
 </html>
