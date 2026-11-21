@@ -1,89 +1,94 @@
-const API_BASE = window.HORIZON_API_BASE ?? ''
+const formatoNumero = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 })
 
-const API_URL_EMPLEADOS = `${API_BASE}/api/empleadosByDepartamento`
-const API_URL_TOTAL = `${API_BASE}/api/totalSalario`
-
-// 2. La sesión viaja en una cookie HttpOnly; el frontend no manipula el token
-function opcionesFetch() {
-    return {
-        method: 'GET',
-        credentials: 'include'
-    };
-}
-
-async function empleadoPorDepartamento() {
-    const response = await fetch(API_URL_EMPLEADOS, opcionesFetch());
-
-    if (!response.ok) {
-        throw new Error(`Error ${response.status} al obtener los departamentos`);
-    }
-
-    return response.json();
-}
-
-async function totalSalario() {
-    const response = await fetch(API_URL_TOTAL, opcionesFetch());
-
-    if (!response.ok) {
-        throw new Error(`Error ${response.status} al obtener el total de salario`);
-    }
-
-    return response.json();
-}
-
-empleadoPorDepartamento().then(data => {
-    if (!Array.isArray(data)) {
-        throw new Error('La respuesta de departamentos no es un arreglo');
-    }
-
-    // 1. Calcular el total de empleados
-    // Asegúrate de que "cantidad" sea la propiedad que envía tu backend
-    const totalPlantilla = data.reduce((acc, departamento) => acc + departamento.cantidad, 0);
-
-    const plantillaActiva = document.getElementById('plantillaActiva');
+function actualizarPlantilla(total) {
+    const plantillaActiva = document.getElementById('plantillaActiva')
     if (plantillaActiva) {
-        plantillaActiva.textContent = `${totalPlantilla}`;
+        plantillaActiva.textContent = String(total)
     }
 
-    // 2. Actualizar el texto del total en el HTML
-    const totalPlantillaText = document.getElementById('totalPlantillaText');
+    const totalPlantillaText = document.getElementById('totalPlantillaText')
     if (totalPlantillaText) {
-        totalPlantillaText.textContent = `${totalPlantilla} personas - plantilla actual`;
+        totalPlantillaText.textContent = `${formatoNumero.format(total)} personas - plantilla actual`
+    }
+}
+
+function actualizarTotalSalario(total) {
+    const totalNomina = document.getElementById('totalNomina')
+    if (totalNomina) {
+        totalNomina.textContent = `$${formatoNumero.format(Number(total ?? 0))}`
+    }
+}
+
+function renderizarDepartamentos(departamentos) {
+    if (!Array.isArray(departamentos)) {
+        throw new Error('La respuesta de departamentos no es un arreglo')
     }
 
-    // 3. Obtener el contenedor y limpiarlo
-    const progressDiv = document.getElementById('progressDiv');
-    if (!progressDiv) {
-        return;
+    const total = departamentos.reduce(
+        (acumulado, departamento) => acumulado + Number(departamento.cantidad ?? 0),
+        0
+    )
+    actualizarPlantilla(total)
+
+    const progressDiv = document.getElementById('progressDiv')
+    if (!progressDiv) return
+
+    // Se construye con nodos en lugar de innerHTML: el nombre del
+    // departamento viene de la base de datos y no debe interpretarse como HTML.
+    const fragmento = document.createDocumentFragment()
+
+    departamentos.forEach((departamento) => {
+        const nombre = String(departamento.nombre ?? 'Sin departamento')
+        const cantidad = Number(departamento.cantidad ?? 0)
+        const porcentaje = total > 0 ? Math.round((cantidad / total) * 100) : 0
+
+        const fila = document.createElement('div')
+        fila.className = 'd-flex justify-content-between'
+
+        const etiqueta = document.createElement('small')
+        etiqueta.textContent = nombre
+
+        const valor = document.createElement('small')
+        valor.textContent = `${cantidad} - ${porcentaje}%`
+
+        fila.append(etiqueta, valor)
+
+        const barraContenedor = document.createElement('div')
+        barraContenedor.className = 'progress'
+        barraContenedor.setAttribute('role', 'progressbar')
+        barraContenedor.setAttribute('aria-label', `Progreso ${nombre}`)
+        barraContenedor.setAttribute('aria-valuenow', String(porcentaje))
+        barraContenedor.setAttribute('aria-valuemin', '0')
+        barraContenedor.setAttribute('aria-valuemax', '100')
+
+        const barra = document.createElement('div')
+        barra.className = 'progress-bar'
+        barra.style.width = `${porcentaje}%`
+
+        barraContenedor.append(barra)
+        fragmento.append(fila, barraContenedor)
+    })
+
+    progressDiv.replaceChildren(fragmento)
+}
+
+async function cargarResumen() {
+    const [departamentos, salario] = await Promise.allSettled([
+        window.HORIZON_API.getEmpleadosByDepartamento(),
+        window.HORIZON_API.getTotalSalario()
+    ])
+
+    if (departamentos.status === 'fulfilled') {
+        renderizarDepartamentos(departamentos.value)
+    } else {
+        console.error('Error al cargar los departamentos:', departamentos.reason)
     }
 
-    progressDiv.innerHTML = '';
-
-    // 4. Iterar y renderizar cada departamento respetando tu diseño HTML
-    data.forEach(departamento => {
-        // Calcular el porcentaje (redondeado sin decimales para que se vea como en tu ejemplo)
-        const porcentaje = totalPlantilla > 0 ? Math.round((departamento.cantidad / totalPlantilla) * 100) : 0;
-
-        progressDiv.innerHTML += `
-            <div class="d-flex justify-content-between">
-                <small>${departamento.nombre}</small>
-                <small>${departamento.cantidad} - ${porcentaje}%</small>
-            </div>
-            <div class="progress" role="progressbar" aria-label="Progreso ${departamento.nombre}" aria-valuenow="${porcentaje}"
-                aria-valuemin="0" aria-valuemax="100">
-                <div class="progress-bar" style="width: ${porcentaje}%"></div>
-            </div>
-        `;
-    });
-}).catch(error => {
-    console.error("Error al cargar los departamentos:", error);
-});
-
-totalSalario().then(data => {
-    const totalNomina = document.getElementById('totalNomina');
-    if (totalNomina && data && data.total !== undefined) {
-        totalNomina.textContent = `$${data.total}`;
+    if (salario.status === 'fulfilled') {
+        actualizarTotalSalario(salario.value?.total)
+    } else {
+        console.error('Error al cargar el total de la nómina:', salario.reason)
     }
-}).catch(error => {
-    console.error("Error al cargar el total de la nomina:", error);
-});
+}
+
+document.addEventListener('DOMContentLoaded', cargarResumen)

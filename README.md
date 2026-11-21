@@ -4,7 +4,7 @@
 
 Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS**, **JavaScript** y **Bootstrap 5**. Incluye un resumen ejecutivo con indicadores y gráficas, un directorio de empleados y autenticación mediante **cookie de sesión HttpOnly** emitida por el backend.
 
-> **Proyecto en desarrollo:** la autenticación y los endpoints que alimentan el resumen están terminados. El directorio y el formulario de alta siguen siendo elementos visuales de ejemplo.
+> **Proyecto en desarrollo:** el frontend ya consume la autenticación, el resumen, el directorio y el alta de empleados. Quedan como elementos visuales la gráfica de evolución, los filtros avanzados, la paginación y las acciones de exportar/columnas.
 
 ## Estado actual
 
@@ -13,7 +13,8 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 | Login, logout y verificación de sesión (`/login`, `/logout`, `/check-session`) | Terminado |
 | Endpoints de datos (`/api/empleadosByDepartamento`, `/api/totalSalario`) | Terminado |
 | Resumen | Conectado a la API real para plantilla, distribución por departamento y nómina |
-| Directorio | Maquetación terminada; datos de ejemplo |
+| Directorio | Conectado a `GET /employee/getAll` (búsqueda local incluida) |
+| Formulario de alta | Conectado a `POST /employee/create` |
 | Formulario de login | Conectado al backend real |
 
 ## Características
@@ -22,13 +23,14 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 - Página de entrada del panel.
 - Tarjetas de KPIs: plantilla activa, rotación, ausentismo y coste de nómina.
 - Gráfica de evolución de la plantilla con Chart.js.
-- Distribución por departamento (preparada para consumir la API).
-- Bandeja de decisiones y actividad reciente.
+- Distribución por departamento construida con `GET /api/empleadosByDepartamento`.
+- Bandeja de decisiones y actividad reciente (datos de ejemplo).
 
 **Directorio** (`directorio.html`):
-- Tarjetas de indicadores de personal.
-- Buscador y filtros por departamento, sede y estado.
-- Tabla de empleados con paginación (elementos visuales de ejemplo).
+- Tarjetas de indicadores de personal; la plantilla se calcula con `GET /employee/getAll`.
+- Buscador que filtra la tabla por nombre, correo o ID.
+- Tabla cargada desde la API; los filtros de departamento, sede y estado siguen siendo visuales.
+- Modal "Añadir empleado" conectado a `POST /employee/create`; muestra la contraseña temporal cuando el backend la genera.
 
 **Inicio de sesión** (`login.html`):
 - Envía las credenciales a `POST /login`.
@@ -75,8 +77,10 @@ recursos_humanos/
 ├── css/
 │   └── styles.css      # Estilos y utilidades propias
 ├── js/
+│   ├── api.js          # Cliente único: fetch con credenciales, JSON y errores 401
 │   ├── auth.js         # Valida la cookie de sesión antes de mostrar el panel y gestiona el logout
 │   ├── login.js        # Envía credenciales al backend e inicia la sesión
+│   ├── directorio.js   # Carga la tabla y envía el formulario de alta
 │   ├── graficas.js     # Inicialización de Chart.js (solo en el resumen)
 │   └── resumen.js      # Consumo de los endpoints de datos y actualización de KPIs
 ├── static/
@@ -84,7 +88,7 @@ recursos_humanos/
 └── README.md
 ```
 
-Las rutas de recursos y las redirecciones son relativas, por lo que el frontend funciona tanto en la raíz del dominio como en un subdirectorio. En esta copia las llamadas al API usan `window.HORIZON_API_BASE` (`js/config.js`): en local apuntan a `http://localhost:3000` y en Vercel son relativas, resueltas por `vercel.json`. No hace falta editar `js/auth.js`, `js/login.js` ni `js/resumen.js`.
+Las rutas de recursos y las redirecciones son relativas, por lo que el frontend funciona tanto en la raíz del dominio como en un subdirectorio. En esta copia las llamadas al API usan `window.HORIZON_API_BASE` (`js/config.js`): en local apuntan a `http://localhost:3000` y en Vercel son relativas, resueltas por `vercel.json`. Todas las peticiones pasan por `window.HORIZON_API` (`js/api.js`), así que no hace falta editar `js/auth.js`, `js/login.js`, `js/resumen.js` ni `js/directorio.js` al cambiar de entorno.
 
 ---
 
@@ -162,8 +166,10 @@ El frontend espera que el backend esté ejecutándose en `http://localhost:3000`
 | `GET` | `/check-session` | Devuelve `200 OK` con `{ "user": ... }` si la cookie contiene un JWT válido; `401` si no hay sesión. |
 | `GET` | `/api/empleadosByDepartamento` | Devuelve `[{ "nombre": "...", "cantidad": 75 }, ...]` con los contratos agrupados por departamento. |
 | `GET` | `/api/totalSalario` | Devuelve `{ "total": 707678740 }` con la suma de salarios; `0` si no hay contratos. |
+| `GET` | `/employee/getAll` | Devuelve `{ "employees": [{ "name": "...", "email": "..." }] }`. Alimenta la tabla del directorio. |
+| `POST` | `/employee/create` | Alta de empleado y contrato. Si no se envía `password`, la respuesta incluye `temporaryPassword`. |
 
-Ambas rutas `/api/*` requieren sesión válida y están incluidas en el proxy de `vercel.json`.
+Todas las rutas anteriores, salvo `/login` y `/logout`, requieren sesión válida. `vercel.json` las proxya al backend con una sola regla y les aplica `Cache-Control: no-store`.
 
 ---
 
@@ -181,8 +187,9 @@ Al ser un sitio estático, se puede publicar directamente:
 
 ## Limitaciones conocidas
 
-- **Datos:** el resumen usa datos reales; el directorio sigue usando valores de ejemplo.
-- **Interfaz:** las funciones "Añadir empleado", "Exportar", "Columnas", filtros y paginación son elementos visuales sin lógica de backend integrada.
+- **Datos:** el resumen, la tabla del directorio y el alta usan datos reales; la gráfica de evolución y las tarjetas de rotación/ausentismo siguen siendo ejemplos.
+- **Directorio:** `/employee/getAll` todavía solo devuelve `name` y `email`, por lo que las columnas de departamento, puesto, sede y contrato aparecen como `—` hasta que el backend las incluya.
+- **Interfaz:** "Exportar", "Columnas", los filtros por departamento/sede/estado y la paginación siguen siendo elementos visuales.
 - **API:** requiere que el backend esté disponible en `http://localhost:3000` (o la URL configurada) con CORS y credenciales habilitados.
 - **Sesión:** la cookie es `HttpOnly`, por lo que el frontend no puede leerla; el estado se consulta con `/check-session`.
 - **Duplicación de layout:** al no utilizar un motor de plantillas en el frontend, la barra lateral y la cabecera se repiten entre `index.html` y `directorio.html`.
