@@ -74,16 +74,16 @@
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Personas activas</section>
-                            <h1 id="directorioPersonasActivas">248</h1>
-                            <small class="text-success">En 3 sedes y 6 departamentos</small>
+                            <h1 id="directorioPersonasActivas">—</h1>
+                            <small id="directorioCobertura" class="text-success">Cargando cobertura...</small>
                         </article>
                     </div>
                     <!-- Card rotación -->
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Incorporaciones este mes</section>
-                            <h1>8</h1>
-                            <small class="text-success">2 planes todavía en curso</small>
+                            <h1 id="directorioIncorporaciones">—</h1>
+                            <small class="text-success">Altas de contrato en los últimos 12 meses</small>
                         </article>
                     </div>
                     <!-- Card ausentismo -->
@@ -112,7 +112,7 @@
                     <ul class="d-flex gap-5 list-unstyled">
                         <li>
                             <a class="text-decoration-none text-reset" href="#">Todos los empleados -
-                                248</a>
+                                <span id="navTotalEmpleados">—</span></a>
                         </li>
                         <li>
                             <a class="text-decoration-none text-reset" href="#">En incorporación - 2</a>
@@ -132,28 +132,35 @@
                         <li>
                             <div class="dropdown">
                                 <button class="btn btn-light dropdown-toggle bg-gray" type="button"
-                                    id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                    id="botonFiltroDepartamento" data-bs-toggle="dropdown" aria-expanded="false">
                                     Departamentos
                                 </button>
-                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                                    <li><a class="dropdown-item" href="#">Tecnología</a></li>
-                                    <li><a class="dropdown-item" href="#">Operaciones</a></li>
-                                    <li><a class="dropdown-item" href="#">Personas</a></li>
-                                    <li><a class="dropdown-item" href="#">Finanzas</a></li>
-                                    <li><a class="dropdown-item" href="#">Comercial</a></li>
+                                <ul class="dropdown-menu" aria-labelledby="botonFiltroDepartamento"
+                                    id="listaFiltroDepartamento">
+                                    <li><button type="button" class="dropdown-item" disabled>Cargando...</button></li>
                                 </ul>
                             </div>
                         </li>
                         <li>
                             <div class="dropdown">
                                 <button class="btn btn-light dropdown-toggle bg-gray" type="button"
-                                    id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
+                                    id="botonFiltroSede" data-bs-toggle="dropdown" aria-expanded="false">
                                     Sede
                                 </button>
-                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
-                                    <li><a class="dropdown-item" href="#">Norte</a></li>
-                                    <li><a class="dropdown-item" href="#">Centro</a></li>
-                                    <li><a class="dropdown-item" href="#">Sur</a></li>
+                                <ul class="dropdown-menu" aria-labelledby="botonFiltroSede" id="listaFiltroSede">
+                                    <li><button type="button" class="dropdown-item" disabled>Cargando...</button></li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="dropdown">
+                                <button class="btn btn-light dropdown-toggle bg-gray" type="button"
+                                    id="botonFiltroContrato" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Contrato
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="botonFiltroContrato"
+                                    id="listaFiltroContrato">
+                                    <li><button type="button" class="dropdown-item" disabled>Cargando...</button></li>
                                 </ul>
                             </div>
                         </li>
@@ -164,9 +171,9 @@
                                     Estado
                                 </button>
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton3">
-                                    <li><a class="dropdown-item" href="#">Activo</a></li>
-                                    <li><a class="dropdown-item" href="#">En incorporación</a></li>
-                                    <li><a class="dropdown-item" href="#">En ausencia</a></li>
+                                    <li><button type="button" class="dropdown-item">Activo</button></li>
+                                    <li><button type="button" class="dropdown-item">En incorporación</button></li>
+                                    <li><button type="button" class="dropdown-item">En ausencia</button></li>
                                 </ul>
                             </div>
                         </li>
@@ -318,7 +325,7 @@
                     <!-- TODO Footer de la DashBoard-->
                     <div class="container-fluid">
                         <div class="d-flex justify-content-between align-items-center g-2">
-                            <div>Mostrando 1-10 de 248 empleados</div>
+                            <div id="directorioPaginadoText">Cargando empleados...</div>
 
                             <!-- Navegador de Paginas del DashBoard -->
                             <div>
@@ -376,34 +383,26 @@
                                 </div>
                                 <div class="col-12 col-md-12">
                                     <label for="trabajadorPuesto">Puesto</label>
-                                    <input type="text" class="form-control" id="trabajadorPuesto" name="position" maxlength="30" required>
+                                    <input type="text" class="form-control" id="trabajadorPuesto" name="position"
+                                        list="listaPuestos" maxlength="30" required>
+                                    <datalist id="listaPuestos"></datalist>
                                 </div>
                                 <div class="col-12 col-md-6">
                                     <label for="selectorSede">Ubicación Sede</label>
                                     <select class="form-select form-select-sm" id="selectorSede" name="sede" required>
                                         <option value="" selected>Seleccionar...</option>
-                                        <option value="Norte">Norte</option>
-                                        <option value="Centro">Centro</option>
-                                        <option value="Sur">Sur</option>
                                     </select>
                                 </div>
                                 <div class="col-12 col-md-6">
                                     <label for="selectorDepartamento">Departamento</label>
                                     <select class="form-select form-select-sm" id="selectorDepartamento" name="department" required>
-                                        <option value="" selected>Seleccionar...</option>
-                                        <option value="Tecnología">Tecnología</option>
-                                        <option value="Operaciones">Operaciones</option>
-                                        <option value="Personas">Personas</option>
-                                        <option value="Finanzas">Finanzas</option>
-                                        <option value="Comercial">Comercial</option>
+                                        <option value="" selected>Seleccionar sede primero...</option>
                                     </select>
                                 </div>
                                 <div class="col-12 col-md-12">
                                     <label for="selectorContrato">Contrato</label>
                                     <select class="form-select form-select-sm" id="selectorContrato" name="contract_type" required>
                                         <option value="" selected>Seleccionar...</option>
-                                        <option value="Indefinido">Indefinido</option>
-                                        <option value="Temporal">Temporal</option>
                                     </select>
                                 </div>
                                 <div class="col-12 col-md-12">
@@ -421,6 +420,23 @@
                         <button type="submit" class="btn btn-primary" id="botonRegistrar">Agregar Empleado</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detalle de un empleado: se llena con GET /employee/getById/:id -->
+    <div class="modal fade" id="detalleEmpleado" tabindex="-1" aria-labelledby="detalleEmpleadoTitulo"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="detalleEmpleadoTitulo">Empleado</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="detalleEmpleadoContenido">Cargando...</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
             </div>
         </div>
     </div>
