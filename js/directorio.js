@@ -1,9 +1,16 @@
 const formatoNumero = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 })
 const etiquetasSede = { NORTH: 'Norte', CENTER: 'Centro', SOUTH: 'Sur' }
 
+const EMPLEADOS_POR_PAGINA = 10
+
 let empleados = []
 let catalogos = { roles: [], sedes: [], departments: [], contractTypes: [], positions: [] }
 let filtros = { department: '', sede: '', contract_type: '' }
+let pagina = 1
+let totalEmpleados = 0
+let totalPaginas = 1
+let temporizadorBusqueda
+let solicitudActual = 0
 
 function setText(id, texto) {
     const elemento = document.getElementById(id)
@@ -65,72 +72,205 @@ function crearFila(empleado) {
     return fila
 }
 
-function actualizarContador(visibles) {
-    const contador = document.getElementById('directorioEmpleadosCount')
-    if (contador) {
-        contador.textContent = visibles === empleados.length
-            ? `${formatoNumero.format(empleados.length)} empleados`
-            : `Mostrando ${formatoNumero.format(visibles)} de ${formatoNumero.format(empleados.length)} empleados`
+function hayFiltros() {
+    const busqueda = document.getElementById('buscarEmpleados')?.value.trim() ?? ''
+    return Boolean(busqueda || filtros.department || filtros.sede || filtros.contract_type)
+}
+
+function actualizarContadores() {
+    const total = formatoNumero.format(totalEmpleados)
+    setText('directorioEmpleadosCount', totalEmpleados === 0 ? 'Sin resultados' : `${total} empleados`)
+
+    if (totalEmpleados === 0) {
+        setText('directorioPaginadoText', hayFiltros() ? 'No hay resultados para los filtros aplicados' : 'No hay empleados registrados')
+        return
     }
 
+    if (empleados.length === 0) {
+        setText('directorioPaginadoText', `No hay resultados en la página ${pagina}`)
+        return
+    }
+
+    const inicio = (pagina - 1) * EMPLEADOS_POR_PAGINA + 1
+    const fin = Math.min(inicio + empleados.length - 1, totalEmpleados)
     setText(
         'directorioPaginadoText',
-        `Mostrando ${formatoNumero.format(visibles)} de ${formatoNumero.format(empleados.length)} empleados`
+        `Mostrando ${formatoNumero.format(inicio)}–${formatoNumero.format(fin)} de ${total} empleados`
     )
 }
 
-function renderizarEmpleados(filtro = '') {
+function numerosDePagina(actual, total) {
+    const candidatos = new Set([1, total, actual - 1, actual, actual + 1])
+    const visibles = [...candidatos]
+        .filter((numero) => numero >= 1 && numero <= total)
+        .sort((a, b) => a - b)
+
+    const resultado = []
+    visibles.forEach((numero, indice) => {
+        if (indice > 0 && numero - visibles[indice - 1] > 1) resultado.push('…')
+        resultado.push(numero)
+    })
+    return resultado
+}
+
+function crearItemPagina(texto, destino, etiqueta, deshabilitado = false, activo = false) {
+    const item = document.createElement('li')
+    item.className = `page-item${deshabilitado ? ' disabled' : ''}${activo ? ' active' : ''}`
+
+    const enlace = document.createElement('button')
+    enlace.type = 'button'
+    enlace.className = 'page-link'
+    enlace.textContent = texto
+    enlace.setAttribute('aria-label', etiqueta)
+    if (activo) enlace.setAttribute('aria-current', 'page')
+
+    enlace.dataset.pagina = String(destino)
+    if (deshabilitado) enlace.disabled = true
+
+    item.append(enlace)
+    return item
+}
+
+function renderizarPaginacion() {
+    const lista = document.getElementById('paginacionEmpleados')
+    if (!lista) return
+
+    const fragmento = document.createDocumentFragment()
+    fragmento.append(crearItemPagina('‹', pagina - 1, 'Página anterior', pagina <= 1))
+
+    for (const numero of numerosDePagina(pagina, totalPaginas)) {
+        if (numero === '…') {
+            const item = document.createElement('li')
+            item.className = 'page-item disabled'
+            const texto = document.createElement('span')
+            texto.className = 'page-link'
+            texto.textContent = '…'
+            item.append(texto)
+            fragmento.append(item)
+            continue
+        }
+        fragmento.append(crearItemPagina(String(numero), numero, `Página ${numero}`, false, numero === pagina))
+    }
+
+    fragmento.append(crearItemPagina('›', pagina + 1, 'Página siguiente', pagina >= totalPaginas))
+    lista.replaceChildren(fragmento)
+}
+
+function renderizarEmpleados() {
     const tbody = document.getElementById('directorioEmpleadosBody')
     if (!tbody) return
 
-    const texto = filtro.trim().toLowerCase()
-    const visibles = empleados.filter((empleado) => {
-        const buscado = `${nombreCompleto(empleado)} ${empleado.email ?? ''} ${empleado.id ?? ''}`.toLowerCase()
-        if (texto && !buscado.includes(texto)) return false
-        if (filtros.sede && empleado.sede !== filtros.sede) return false
-        if (filtros.department && empleado.department !== filtros.department) return false
-        if (filtros.contract_type && empleado.contract_type !== filtros.contract_type) return false
-        return true
-    })
-
     const fragmento = document.createDocumentFragment()
 
-    if (visibles.length === 0) {
+    if (empleados.length === 0) {
         const fila = document.createElement('tr')
         const celdaVacia = document.createElement('td')
         celdaVacia.colSpan = 6
         celdaVacia.className = 'text-center text-body-tertiary'
-        celdaVacia.textContent = empleados.length === 0
-            ? 'No hay empleados registrados'
-            : 'No hay resultados para la búsqueda'
+        celdaVacia.textContent = hayFiltros() ? 'No hay resultados para la búsqueda' : 'No hay empleados registrados'
         fila.append(celdaVacia)
         fragmento.append(fila)
     } else {
-        visibles.forEach((empleado) => fragmento.append(crearFila(empleado)))
+        empleados.forEach((empleado) => fragmento.append(crearFila(empleado)))
     }
 
     tbody.replaceChildren(fragmento)
-    actualizarContador(visibles)
+    actualizarContadores()
+    renderizarPaginacion()
+}
+
+// Los filtros se aplican en el backend. Este bloque solo se usa si el backend
+// desplegado todavía no tiene /employee/getPage: así la paginación sigue
+// funcionando con la respuesta completa de /employee/getAll.
+function paginarEnCliente(data, parametros) {
+    const texto = (parametros.q ?? '').trim().toLowerCase()
+    const filtrados = normalizarEmpleados(data).filter((empleado) => {
+        const buscado = `${nombreCompleto(empleado)} ${empleado.email ?? ''} ${empleado.id ?? ''}`.toLowerCase()
+        if (texto && !buscado.includes(texto)) return false
+        if (parametros.sede && empleado.sede !== parametros.sede) return false
+        if (parametros.department && empleado.department !== parametros.department) return false
+        if (parametros.contract_type && empleado.contract_type !== parametros.contract_type) return false
+        return true
+    })
+
+    const total = filtrados.length
+    const inicio = (parametros.page - 1) * parametros.limit
+    return {
+        employees: filtrados.slice(inicio, inicio + parametros.limit),
+        pagination: {
+            page: parametros.page,
+            limit: parametros.limit,
+            total,
+            totalPages: Math.max(1, Math.ceil(total / parametros.limit))
+        }
+    }
+}
+
+async function obtenerEmpleados(parametros) {
+    try {
+        return await window.HORIZON_API.getEmployeesPage(parametros)
+    } catch (error) {
+        if (error.status !== 404) throw error
+        try {
+            return paginarEnCliente(await window.HORIZON_API.getEmployees(), parametros)
+        } catch (errorGetAll) {
+            if (errorGetAll.status === 404) return paginarEnCliente(null, parametros)
+            throw errorGetAll
+        }
+    }
 }
 
 async function cargarEmpleados() {
-    try {
-        const data = await window.HORIZON_API.getEmployees()
-        empleados = normalizarEmpleados(data)
-        renderizarEmpleados(document.getElementById('buscarEmpleados')?.value ?? '')
+    // Si el usuario cambia de página o escribe rápido, se descartan las
+    // respuestas anteriores para no pintar datos de una consulta obsoleta.
+    const solicitud = ++solicitudActual
 
-        const total = formatoNumero.format(empleados.length)
-        setTextSiVacio('directorioPersonasActivas', total)
-        setTextSiVacio('navTotalEmpleados', total)
-    } catch (error) {
-        // El backend responde 404 cuando aún no hay empleados registrados.
-        if (error.status === 404) {
-            empleados = []
-            renderizarEmpleados()
-            return
+    try {
+        const parametros = {
+            page: pagina,
+            limit: EMPLEADOS_POR_PAGINA,
+            q: document.getElementById('buscarEmpleados')?.value ?? '',
+            department: filtros.department,
+            sede: filtros.sede,
+            contract_type: filtros.contract_type
         }
 
+        let data = await obtenerEmpleados(parametros)
+        if (solicitud !== solicitudActual) return
+
+        let total = Number(data?.pagination?.total ?? 0)
+        let paginas = Math.max(1, Number(data?.pagination?.totalPages) || Math.ceil(total / (data?.pagination?.limit ?? EMPLEADOS_POR_PAGINA)))
+
+        // Si se estaba en una página que ya no existe tras aplicar un filtro,
+        // se muestra la última página disponible.
+        if (data?.pagination && pagina > paginas && total > 0) {
+            pagina = paginas
+            parametros.page = pagina
+            data = await obtenerEmpleados(parametros)
+            if (solicitud !== solicitudActual) return
+
+            total = Number(data?.pagination?.total ?? 0)
+            paginas = Math.max(1, Number(data?.pagination?.totalPages) || Math.ceil(total / (data?.pagination?.limit ?? EMPLEADOS_POR_PAGINA)))
+        }
+
+        empleados = normalizarEmpleados(data)
+        totalEmpleados = total
+        totalPaginas = paginas
+        if (data?.pagination?.page) pagina = Number(data.pagination.page)
+
+        renderizarEmpleados()
+
+        const totalTexto = formatoNumero.format(totalEmpleados)
+        setTextSiVacio('directorioPersonasActivas', totalTexto)
+        setTextSiVacio('navTotalEmpleados', totalTexto)
+    } catch (error) {
+        if (solicitud !== solicitudActual) return
         console.error('Error al cargar el directorio:', error)
+        empleados = []
+        totalEmpleados = 0
+        totalPaginas = 1
+        renderizarEmpleados()
+        document.getElementById('paginacionEmpleados')?.replaceChildren()
         setText('directorioEmpleadosCount', 'No se pudo cargar el directorio')
         setText('directorioPaginadoText', 'No se pudo cargar el directorio')
     }
@@ -194,7 +334,8 @@ function poblarFiltro(contenedorId, botonId, opciones, obtenerTexto, obtenerValo
             contenedor.querySelectorAll('.dropdown-item').forEach((elemento) => {
                 elemento.classList.toggle('active', elemento === botonItem)
             })
-            renderizarEmpleados(document.getElementById('buscarEmpleados')?.value ?? '')
+            pagina = 1
+            cargarEmpleados()
         })
 
         li.append(botonItem)
@@ -377,6 +518,9 @@ async function registrarEmpleado(evento) {
             'success'
         )
         formulario.reset()
+        const buscador = document.getElementById('buscarEmpleados')
+        if (buscador) buscador.value = ''
+        pagina = 1
         await Promise.all([cargarCatalogos(), cargarEmpleados(), cargarIndicadores()])
     } catch (error) {
         console.error('Error al registrar el empleado:', error)
@@ -399,8 +543,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('selectorSede')?.addEventListener('change', actualizarOpcionesDepartamentos)
 
-    document.getElementById('buscarEmpleados')?.addEventListener('input', (evento) => {
-        renderizarEmpleados(evento.target.value)
+    document.getElementById('buscarEmpleados')?.addEventListener('input', () => {
+        clearTimeout(temporizadorBusqueda)
+        temporizadorBusqueda = setTimeout(() => {
+            pagina = 1
+            cargarEmpleados()
+        }, 250)
+    })
+
+    document.getElementById('paginacionEmpleados')?.addEventListener('click', (evento) => {
+        const boton = evento.target.closest('button[data-pagina]')
+        if (!boton || boton.disabled) return
+
+        const destino = Number(boton.dataset.pagina)
+        if (!Number.isInteger(destino) || destino === pagina) return
+
+        pagina = destino
+        cargarEmpleados()
     })
 
     document.getElementById('formularioRegistro')?.addEventListener('submit', registrarEmpleado)
