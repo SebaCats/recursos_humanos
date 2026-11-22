@@ -1,31 +1,37 @@
 # Horizon · Recursos Humanos
 
+> Copia de despliegue: consulta `../README.md` para Vercel y la API. La base del API se configura en `js/config.js` (vacía en Vercel, `http://localhost:3000` en local); `vercel.json` proxya las rutas al backend.
+
 Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS**, **JavaScript** y **Bootstrap 5**. Incluye un resumen ejecutivo con indicadores y gráficas, un directorio de empleados y autenticación mediante **cookie de sesión HttpOnly** emitida por el backend.
 
-> **Proyecto en desarrollo:** los endpoints de autenticación están terminados y probados. Los endpoints que alimentan los datos del resumen todavía están pendientes, por lo que la interfaz conserva valores de ejemplo.
+> **Proyecto en desarrollo:** el frontend consume autenticación, catálogos, reportes, directorio (con paginación y filtros), detalle de empleado y alta. Quedan como elementos visuales el filtro de estado, "Exportar", "Columnas" y las secciones de decisiones/actividad.
 
 ## Estado actual
 
 | Área | Estado |
 | ---- | ------ |
-| Login, logout y verificación de sesión | Terminado y probado |
-| Endpoints de datos (`/api/empleadosByDepartamento`, `/api/totalSalario`) | Pendiente |
-| Resumen y directorio | Maquetación terminada; datos de ejemplo |
+| Login, logout y verificación de sesión (`/login`, `/logout`, `/check-session`) | Terminado |
+| Endpoints de datos y reportes (`/api/*`) | Terminado |
+| Resumen | Conectado a `/api/resumen`, evolución, distribución y nómina real |
+| Directorio | Conectado a `GET /employee/getPage`, paginación, catálogos, filtros y detalle por id |
+| Formulario de alta | Conectado a `POST /employee/create` con catálogos dinámicos |
 | Formulario de login | Conectado al backend real |
 
 ## Características
 
 **Resumen** (`index.html`):
 - Página de entrada del panel.
-- Tarjetas de KPIs: plantilla activa, rotación, ausentismo y coste de nómina.
-- Gráfica de evolución de la plantilla con Chart.js.
-- Distribución por departamento (preparada para consumir la API).
-- Bandeja de decisiones y actividad reciente.
+- Plantilla activa y cobertura desde `GET /api/resumen`; nómina desde `GET /api/totalSalario`.
+- Gráfica de altas de contrato con Chart.js alimentada por `GET /api/evolucionContrataciones`.
+- Distribución por departamento, sedes, roles y tipos de contrato desde `/api/*`.
+- Nómina por departamento construida con `GET /api/salarioByDepartamento`.
+- Bandeja de decisiones y actividad reciente (datos de ejemplo).
 
 **Directorio** (`directorio.html`):
-- Tarjetas de indicadores de personal.
-- Buscador y filtros por departamento, sede y estado.
-- Tabla de empleados con paginación (elementos visuales de ejemplo).
+- Tarjetas de indicadores alimentadas por `/api/resumen`, `/api/evolucionContrataciones` y `/api/empleadosBySede`.
+- Buscador que filtra por nombre, correo o ID, más filtros funcionales de departamento, sede y contrato. Buscar o filtrar reinicia la paginación.
+- Tabla paginada (10 filas por página) cargada desde `GET /employee/getPage`; al pulsar un nombre se consulta `GET /employee/getById/:id`. Si el backend aún no tiene ese endpoint, se usa `GET /employee/getAll` y se pagina en el cliente.
+- Modal "Añadir empleado" con sedes, departamentos, tipos de contrato y puestos cargados desde `GET /api/catalogos`. Envía `POST /employee/create` y muestra la contraseña temporal.
 
 **Inicio de sesión** (`login.html`):
 - Envía las credenciales a `POST /login`.
@@ -33,9 +39,9 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 - Redirige al panel y muestra el mensaje del backend si las credenciales fallan.
 
 **Validación de sesión**:
-- Controlada en las páginas del panel mediante `js/auth.js`.
-- Consulta `GET /check-session` enviando la cookie con `credentials: 'include'`.
-- Si la sesión no es válida, redirige a `login.html`.
+- Controlada en las páginas del panel (`index.html` y `directorio.html`) mediante `js/auth.js`.
+- Consulta `GET http://localhost:3000/check-session` enviando la cookie con `credentials: 'include'`.
+- Si la sesión no es válida, redirige a `login.html`. El contenido se oculta con `visibility` para no romper el layout `d-flex` del `body`.
 
 **Cierre de sesión**:
 - El enlace "Cerrar sesión" (`data-logout`) envía `POST /logout`.
@@ -72,8 +78,10 @@ recursos_humanos/
 ├── css/
 │   └── styles.css      # Estilos y utilidades propias
 ├── js/
+│   ├── api.js          # Cliente único: fetch con credenciales, JSON y errores 401
 │   ├── auth.js         # Valida la cookie de sesión antes de mostrar el panel y gestiona el logout
 │   ├── login.js        # Envía credenciales al backend e inicia la sesión
+│   ├── directorio.js   # Carga la tabla y envía el formulario de alta
 │   ├── graficas.js     # Inicialización de Chart.js (solo en el resumen)
 │   └── resumen.js      # Consumo de los endpoints de datos y actualización de KPIs
 ├── static/
@@ -81,7 +89,7 @@ recursos_humanos/
 └── README.md
 ```
 
-Las rutas de recursos y las redirecciones son relativas, por lo que el frontend funciona tanto en la raíz del dominio como en un subdirectorio. La autenticación y los datos apuntan actualmente a `http://localhost:3000`; para desplegar el frontend con otro backend, actualiza esas URLs en `js/auth.js`, `js/login.js` y `js/resumen.js`.
+Las rutas de recursos y las redirecciones son relativas, por lo que el frontend funciona tanto en la raíz del dominio como en un subdirectorio. En esta copia las llamadas al API usan `window.HORIZON_API_BASE` (`js/config.js`): en local apuntan a `http://localhost:3000` y en Vercel son relativas, resueltas por `vercel.json`. Todas las peticiones pasan por `window.HORIZON_API` (`js/api.js`), así que no hace falta editar `js/auth.js`, `js/login.js`, `js/resumen.js` ni `js/directorio.js` al cambiar de entorno.
 
 ---
 
@@ -105,16 +113,16 @@ No abras las páginas con doble clic (`file://`): la validación de sesión y la
 
 ## Autenticación por cookie de sesión
 
-El backend emite una cookie `access_token` con las marcas `HttpOnly` y `SameSite=Strict`. El frontend no lee ni guarda el token en `localStorage`: el navegador envía la cookie automáticamente gracias a `credentials: 'include'`.
+El backend emite una cookie `session-token` con las marcas `HttpOnly` y `SameSite=Strict` (vigencia de 1 hora). El frontend no lee ni guarda el token en `localStorage`: el navegador envía la cookie automáticamente gracias a `credentials: 'include'`.
 
 1. **Inicio de sesión (`js/login.js`)**:
    - Envía `POST http://localhost:3000/login` con `{ email, password }`.
-   - Si la respuesta es exitosa (`201 Created`), el backend establece la cookie de sesión y el frontend redirige a `index.html`.
+   - Si la respuesta es exitosa (`200 OK`), el backend establece la cookie de sesión y el frontend redirige a `index.html`.
    - Si falla, muestra el campo `message` de la respuesta (por ejemplo, credenciales incorrectas).
 
 2. **Verificación de sesión (`js/auth.js`)**:
    - Al cargar el panel, envía `GET http://localhost:3000/check-session` con `credentials: 'include'`.
-   - Si responde `200 OK`, muestra el contenido y registra el usuario autenticado en la consola.
+   - Si responde `200 OK` con `{ "user": ... }`, muestra el contenido y registra el usuario autenticado en la consola.
    - Si responde `401` o hay un error de red, redirige a `login.html`.
 
 3. **Cierre de sesión**:
@@ -123,28 +131,43 @@ El backend emite una cookie `access_token` con las marcas `HttpOnly` y `SameSite
 
 ---
 
-## Datos dinámicos (en desarrollo)
+## Datos dinámicos
 
-Los endpoints que alimentan el resumen todavía no están implementados. `js/resumen.js` ya está preparado para consumirlos con la cookie de sesión:
+Todas las peticiones pasan por `window.HORIZON_API` (`js/api.js`) y envían la cookie de sesión. En local usan `http://localhost:3000`; en Vercel son relativas y `vercel.json` las proxya al backend.
+
+Endpoints consumidos por el panel:
 
 ```text
-GET http://localhost:3000/api/empleadosByDepartamento  ->  [{ "nombre": "Tecnología", "cantidad": 75 }, ...]
-GET http://localhost:3000/api/totalSalario             ->  { "total": 707678740 }
+GET /api/resumen                     -> { totalEmployees, totalContracts, totalDepartments, totalSedes, averageSalary }
+GET /api/totalSalario                -> { "total": 2070000 }
+GET /api/empleadosByDepartamento     -> [{ "nombre": "Tecnología", "cantidad": 1 }, ...]
+GET /api/empleadosBySede             -> [{ "nombre": "NORTH", "cantidad": 1 }, ...]
+GET /api/empleadosByRole             -> [{ "nombre": "GUEST", "cantidad": 2 }, ...]
+GET /api/empleadosByContractType     -> [{ "nombre": "Indefinido", "cantidad": 1 }, ...]
+GET /api/salarioByDepartamento       -> [{ "nombre": "Tecnología", "sede": "SOUTH", "total": 1200000 }, ...]
+GET /api/evolucionContrataciones     -> [{ "mes": "2026-11", "cantidad": 2 }, ...]
+GET /api/catalogos                   -> { roles, sedes, departments, contractTypes, positions }
+GET /employee/getAll                 -> { "employees": [...] }
+GET /employee/getPage?page=1&limit=10&q=&department=&sede=&contract_type=
+                                     -> { "employees": [...], "pagination": { "page": 1, "limit": 10, "total": 23, "totalPages": 3 } }
+GET /employee/getById/:id            -> { "employee": {...} }
+POST /employee/create                -> { "result": { "temporaryPassword": "..." } }
 ```
 
-> Estas rutas y formatos son una propuesta y pueden cambiar cuando se implementen los endpoints.
-
-Mientras los endpoints no existan, las solicitudes fallan, el error se registra en la consola y se conservan los valores de ejemplo del HTML.
-
-Elementos que se actualizarán cuando la API esté disponible:
+Si alguna petición falla se registra en consola; las secciones afectadas muestran guiones o valores vacíos en lugar de datos inventados.
 
 | Elemento | ID | Archivo que lo actualiza |
 | -------- | -- | ------------------------ |
-| Plantilla activa | `plantillaActiva` | `js/resumen.js` |
+| Plantilla activa y detalle | `plantillaActiva`, `plantillaDetalle` | `js/resumen.js` |
 | Total de nómina | `totalNomina` | `js/resumen.js` |
-| Texto de plantilla | `totalPlantillaText` | `js/resumen.js` |
 | Barras por departamento | `progressDiv` | `js/resumen.js` |
-| Gráfica de evolución | `myChart` | `js/graficas.js` |
+| Nómina por departamento | `nominaPorDepartamento` | `js/resumen.js` |
+| Distribución por sede/rol/contrato | `distribucionDetalle` | `js/resumen.js` |
+| Gráfica de altas | `myChart`, `evolucionDetalle` | `js/graficas.js` + `js/resumen.js` |
+| KPIs del directorio | `directorioPersonasActivas`, `directorioCobertura`, `directorioIncorporaciones` | `js/directorio.js` |
+| Filtros y catálogos | `listaFiltro*`, `selectorSede`, `selectorDepartamento`, `selectorContrato`, `listaPuestos` | `js/directorio.js` |
+| Paginación del directorio | `paginacionEmpleados`, `directorioPaginadoText` | `js/directorio.js` |
+| Detalle de empleado | `detalleEmpleado` | `js/directorio.js` |
 
 ---
 
@@ -156,16 +179,22 @@ El frontend espera que el backend esté ejecutándose en `http://localhost:3000`
 
 | Método | Ruta | Comportamiento |
 | ------ | ---- | -------------- |
-| `POST` | `/login` | Recibe `{ "email": "...", "password": "..." }`. Responde `201 Created` con los datos del usuario y establece la cookie `access_token` (`HttpOnly`, `SameSite=Strict`). |
-| `POST` | `/logout` | Invalida la sesión, elimina la cookie y responde `200 OK`. |
-| `GET` | `/check-session` | Devuelve `200 OK` con el usuario si la cookie es válida; `401` si no hay sesión. |
+| `POST` | `/login` | Recibe `{ "email": "...", "password": "..." }`. Responde `200 OK` y establece la cookie `session-token` (`HttpOnly`, `SameSite=Strict`). |
+| `POST` | `/logout` | Elimina la cookie y responde `200 OK`. |
+| `GET` | `/check-session` | Devuelve `200 OK` con `{ "user": ... }` si la cookie contiene un JWT válido; `401` si no hay sesión. |
+| `GET` | `/api/empleadosByDepartamento` | `[{ "nombre": "...", "cantidad": 75 }, ...]`. Alimenta las barras del resumen. |
+| `GET` | `/api/totalSalario` | `{ "total": 707678740 }`. Suma de salarios; `0` si no hay contratos. |
+| `GET` | `/api/resumen` | Totales de empleados, contratos, departamentos, sedes y salario promedio. |
+| `GET` | `/api/empleadosBySede`, `/api/empleadosByRole`, `/api/empleadosByContractType` | Conteos con `{ nombre, cantidad }` para KPIs y distribución. |
+| `GET` | `/api/salarioByDepartamento` | `[{ nombre, sede, total }]`. Nómina agrupada por departamento y sede. |
+| `GET` | `/api/evolucionContrataciones` | `[{ mes, cantidad }]` de los últimos 12 meses. Alimenta la gráfica. |
+| `GET` | `/api/catalogos` | Roles, sedes, departamentos, tipos de contrato y puestos para el formulario y filtros. |
+| `GET` | `/employee/getAll` | `{ "employees": [...] }` con los datos completos del contrato, departamento, sede y rol. |
+| `GET` | `/employee/getPage` | Página del directorio con `{ "employees": [...], "pagination": { page, limit, total, totalPages } }`. Acepta `page`, `limit`, `q`, `department`, `sede` y `contract_type`. |
+| `GET` | `/employee/getById/:id` | `{ "employee": {...} }`. Alimenta el modal de detalle. |
+| `POST` | `/employee/create` | Alta de empleado y contrato. Si no se envía `password`, la respuesta incluye `result.temporaryPassword`. |
 
-### Endpoints pendientes
-
-| Método | Ruta | Comportamiento esperado |
-| ------ | ---- | ----------------------- |
-| `GET` | `/api/empleadosByDepartamento` | Devuelve los empleados agrupados por departamento. |
-| `GET` | `/api/totalSalario` | Devuelve el total acumulado de salarios. |
+Todas las rutas anteriores, salvo `/login` y `/logout`, requieren sesión válida. `vercel.json` las proxya al backend con una sola regla y les aplica `Cache-Control: no-store`.
 
 ---
 
@@ -177,14 +206,15 @@ Al ser un sitio estático, se puede publicar directamente:
 2. En **Settings → Pages**, selecciona la rama y la carpeta raíz (`/`).
 3. La página de entrada será `index.html`.
 
-> **Nota:** GitHub Pages solo sirve archivos estáticos. La autenticación por cookie requiere desplegar el backend por separado y configurar CORS con credenciales. Si frontend y backend quedan en dominios distintos, la cookie debe usar `SameSite=None; Secure` y ambos deben servirse por HTTPS. Los endpoints de datos todavía están pendientes.
+> **Nota:** GitHub Pages solo sirve archivos estáticos. La autenticación por cookie requiere desplegar el backend por separado y configurar CORS con credenciales. Si frontend y backend quedan en dominios distintos, la cookie debe usar `SameSite=None; Secure` y ambos deben servirse por HTTPS.
 
 ---
 
 ## Limitaciones conocidas
 
-- **Datos:** los endpoints de datos no están terminados; el resumen y el directorio usan valores de ejemplo.
-- **Interfaz:** las funciones "Añadir empleado", "Exportar", "Columnas", filtros y paginación son elementos visuales sin lógica de backend integrada.
+- **Datos:** el resumen, la gráfica de altas, el directorio, los catálogos y el alta usan datos reales. Las tarjetas de rotación/ausentismo, la bandeja de decisiones y la actividad reciente siguen siendo ejemplos (la BD no registra bajas ni ausencias).
+- **Directorio:** la paginación y los filtros de departamento, sede y contrato funcionan; el filtro de estado, "Exportar" y "Columnas" siguen siendo elementos visuales.
+- **Contratos:** la BD no tiene fecha de vencimiento, por lo que la tarjeta "Contratos próximos a vencer" no se calcula desde la API.
 - **API:** requiere que el backend esté disponible en `http://localhost:3000` (o la URL configurada) con CORS y credenciales habilitados.
 - **Sesión:** la cookie es `HttpOnly`, por lo que el frontend no puede leerla; el estado se consulta con `/check-session`.
 - **Duplicación de layout:** al no utilizar un motor de plantillas en el frontend, la barra lateral y la cabecera se repiten entre `index.html` y `directorio.html`.

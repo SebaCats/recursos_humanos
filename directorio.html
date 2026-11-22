@@ -9,8 +9,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="css/styles.css">
-    <!--Comentado Temporalmente-->
-    <!-- <script src="js/auth.js"></script> -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
 </head>
 
 <body class="d-flex flex-row bg-gray">
@@ -79,16 +80,16 @@
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Personas activas</section>
-                            <h1 id="directorioPersonasActivas">248</h1>
-                            <small class="text-success">En 3 sedes y 6 departamentos</small>
+                            <h1 id="directorioPersonasActivas">—</h1>
+                            <small id="directorioCobertura" class="text-success">Cargando cobertura...</small>
                         </article>
                     </div>
                     <!-- Card rotación -->
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Incorporaciones este mes</section>
-                            <h1>8</h1>
-                            <small class="text-success">2 planes todavía en curso</small>
+                            <h1 id="directorioIncorporaciones">—</h1>
+                            <small class="text-success">Altas de contrato en los últimos 12 meses</small>
                         </article>
                     </div>
                     <!-- Card ausentismo -->
@@ -116,11 +117,11 @@
                     <!-- Mini NavBar Dash Board-->
                     <ul class="d-flex gap-5 list-unstyled">
                         <li>
-                            <a class="text-decoration-none text-reset" href="#">Todos los empelados -
-                                248</a>
+                            <a class="text-decoration-none text-reset" href="#">Todos los empleados -
+                                <span id="navTotalEmpleados">—</span></a>
                         </li>
                         <li>
-                            <a class="text-decoration-none text-reset" href="#">En incorporacion - 2</a>
+                            <a class="text-decoration-none text-reset" href="#">En incorporación - 2</a>
                         </li>
                         <li>
                             <a class="text-decoration-none text-reset" href="#">Archivados - 12</a>
@@ -130,35 +131,42 @@
                     <!-- Primera Linea de elementos Dash Board-->
                     <ul class="d-flex gap-4 list-unstyled">
                         <li>
-                            <input class="form-control bg-gray" type="search"
-                                placeholder="Nombre, ID o correo electronico" aria-label="Search"
+                            <input class="form-control bg-gray" type="search" id="buscarEmpleados"
+                                placeholder="Nombre, ID o correo electrónico" aria-label="Buscar empleados"
                                 style="width: 350px; max-width: 100%;">
                         </li>
                         <li>
                             <div class="dropdown">
                                 <button class="btn btn-light dropdown-toggle bg-gray" type="button"
-                                    id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                    id="botonFiltroDepartamento" data-bs-toggle="dropdown" aria-expanded="false">
                                     Departamentos
                                 </button>
-                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                                    <li><a class="dropdown-item" href="#">Tecnología</a></li>
-                                    <li><a class="dropdown-item" href="#">Operaciones</a></li>
-                                    <li><a class="dropdown-item" href="#">Personas</a></li>
-                                    <li><a class="dropdown-item" href="#">Finanzas</a></li>
-                                    <li><a class="dropdown-item" href="#">Comercial</a></li>
+                                <ul class="dropdown-menu" aria-labelledby="botonFiltroDepartamento"
+                                    id="listaFiltroDepartamento">
+                                    <li><button type="button" class="dropdown-item" disabled>Cargando...</button></li>
                                 </ul>
                             </div>
                         </li>
                         <li>
                             <div class="dropdown">
                                 <button class="btn btn-light dropdown-toggle bg-gray" type="button"
-                                    id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
+                                    id="botonFiltroSede" data-bs-toggle="dropdown" aria-expanded="false">
                                     Sede
                                 </button>
-                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
-                                    <li><a class="dropdown-item" href="#">Norte</a></li>
-                                    <li><a class="dropdown-item" href="#">Centro</a></li>
-                                    <li><a class="dropdown-item" href="#">Sur</a></li>
+                                <ul class="dropdown-menu" aria-labelledby="botonFiltroSede" id="listaFiltroSede">
+                                    <li><button type="button" class="dropdown-item" disabled>Cargando...</button></li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="dropdown">
+                                <button class="btn btn-light dropdown-toggle bg-gray" type="button"
+                                    id="botonFiltroContrato" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Contrato
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="botonFiltroContrato"
+                                    id="listaFiltroContrato">
+                                    <li><button type="button" class="dropdown-item" disabled>Cargando...</button></li>
                                 </ul>
                             </div>
                         </li>
@@ -169,9 +177,9 @@
                                     Estado
                                 </button>
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton3">
-                                    <li><a class="dropdown-item" href="#">Activo</a></li>
-                                    <li><a class="dropdown-item" href="#">En incorporacion</a></li>
-                                    <li><a class="dropdown-item" href="#">En ausencia</a></li>
+                                    <li><button type="button" class="dropdown-item">Activo</button></li>
+                                    <li><button type="button" class="dropdown-item">En incorporación</button></li>
+                                    <li><button type="button" class="dropdown-item">En ausencia</button></li>
                                 </ul>
                             </div>
                         </li>
@@ -179,7 +187,7 @@
                     <!-- Segunda Linea de elementos Dash Board-->
                     <ul class="d-flex gap-4 list-unstyled align-items-center">
                         <li>
-                            <div class="align-content-center">248 empleados</div>
+                            <div class="align-content-center" id="directorioEmpleadosCount">Cargando empleados...</div>
                         </li>
                         <li>
                             <label for="formFile" class="btn btn-primary">Subir archivo</label>
@@ -206,7 +214,7 @@
                                     <th scope="col">ESTADO</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="directorioEmpleadosBody">
                                 <tr>
                                     <td>
                                         <div>Marta Soler</div>
@@ -243,7 +251,7 @@
                                 <tr>
                                     <td>
                                         <div>Diego Pardo</div>
-                                        <div>EMP-0087 - diego.pardo@horizonte.example</div>
+                                        <div>EMP-0091 - diego.pardo@horizonte.example</div>
                                     </td>
                                     <td>Tecnología</td>
                                     <td>Responsable de producto</td>
@@ -253,8 +261,8 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        <div>Lucia Vega</div>
-                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                        <div>Lucía Vega</div>
+                                        <div>EMP-0033 - lucia.vega@horizonte.example</div>
                                     </td>
                                     <td>Tecnología</td>
                                     <td>Responsable de producto</td>
@@ -265,7 +273,7 @@
                                 <tr>
                                     <td>
                                         <div>Elena Torres</div>
-                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                        <div>EMP-0056 - elena.torres@horizonte.example</div>
                                     </td>
                                     <td>Tecnología</td>
                                     <td>Responsable de producto</td>
@@ -276,7 +284,7 @@
                                 <tr>
                                     <td>
                                         <div>Pablo León</div>
-                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                        <div>EMP-0064 - pablo.leon@horizonte.example</div>
                                     </td>
                                     <td>Tecnología</td>
                                     <td>Responsable de producto</td>
@@ -286,8 +294,8 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        <div>Sofia Martín</div>
-                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                        <div>Sofía Martín</div>
+                                        <div>EMP-0072 - sofia.martin@horizonte.example</div>
                                     </td>
                                     <td>Tecnología</td>
                                     <td>Responsable de producto</td>
@@ -298,7 +306,7 @@
                                 <tr>
                                     <td>
                                         <div>Javier Mora</div>
-                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                        <div>EMP-0079 - javier.mora@horizonte.example</div>
                                     </td>
                                     <td>Tecnología</td>
                                     <td>Responsable de producto</td>
@@ -308,8 +316,8 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        <div>Paula Rios</div>
-                                        <div>EMP-0087 - ana.garcia@horizonte.example</div>
+                                        <div>Paula Ríos</div>
+                                        <div>EMP-0095 - paula.rios@horizonte.example</div>
                                     </td>
                                     <td>Tecnología</td>
                                     <td>Responsable de producto</td>
@@ -323,24 +331,15 @@
                     <!-- TODO Footer de la DashBoard-->
                     <div class="container-fluid">
                         <div class="d-flex justify-content-between align-items-center g-2">
-                            <div>Mostrando 1-10 de 248 empleados</div>
+                            <div id="directorioPaginadoText">Cargando empleados...</div>
 
                             <!-- Navegador de Paginas del DashBoard -->
                             <div>
                                 <div class="container-fluid">
-                                    <nav aria-label="Pagina de Navegacion">
-                                        <ul class="pagination justify-content-center">
-                                            <li class="page-item">
-                                                <a class="page-link" href="#" tabindex="-1">&lt;</a>
-                                            </li>
-                                            <li class="page-item"><a class="page-link" href="#">1</a></li>
-                                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                                            <li class="page-item"><a class="page-link" href="#">...</a></li>
-                                            <li class="page-item"><a class="page-link" href="#">25</a></li>
-                                            <li class="page-item">
-                                                <a class="page-link" href="#">&gt;</a>
-                                            </li>
+                                    <nav aria-label="Página de navegación">
+                                        <ul class="pagination justify-content-center" id="paginacionEmpleados"
+                                            aria-label="Páginas del directorio">
+                                            <li class="page-item disabled"><span class="page-link">Cargando...</span></li>
                                         </ul>
                                     </nav>
                                 </div>
@@ -363,64 +362,77 @@
                     <h1 class="modal-title fs-5" id="staticBackdropLabel">Registro de Empleado</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="container">
-                        <div class="row justify-content-center align-items-center g-2">
-                            <div class="col-12 col-md-12">
-                                <label for="trabajadorNombre">Nombre</label>
-                                <input type="text" class="form-control" id="trabajadorNombre" maxlength="20">
-                            </div>
-                            <div class="col-12 col-md-12">
-                                <label for="trabajadorApellido">Primer Apellido</label>
-                                <input type="text" class="form-control" id="trabajadorApellido" maxlength="20">
-                            </div>
-                            <div class="col-12 col-md-12">
-                                <label for="trabajadorCorreo">Correo</label>
-                                <input type="email" class="form-control" id="trabajadorCorreo" maxlength="20" placeholder="@horizonte.example">
-                            </div>
-                            <div class="col-12 col-md-12">
-                                <label for="trabajadorPuesto">Puesto</label>
-                                <input type="text" class="form-control" id="trabajadorPuesto" maxlength="30">
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label for="selectorSede">Ubicación Sede</label>
-                                <select class="form-select form-select-sm" id="selectorSede" aria-label=".form-select-sm example">
-                                    <option selected="">Seleccionar...</option>
-                                    <option value="1">Norte</option>
-                                    <option value="2">Centro</option>
-                                    <option value="3">Sur</option>
-                                </select>
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label for="selectorDepartamento">Departamento</label>
-                                <select class="form-select form-select-sm" id="selectorDepartamento" aria-label=".form-select-sm example">
-                                    <option selected="">Seleccionar...</option>
-                                    <option value="1">Tecnología</option>
-                                    <option value="2">Operaciones</option>
-                                    <option value="3">Personas</option>
-                                    <option value="4">Finanzas</option>
-                                    <option value="5">Comercial</option>
-                                </select>
-                            </div>
-                            <div class="col-12 col-md-12">
-                                <label for="selectorContrato">Contrato</label>
-                                <select class="form-select form-select-sm" id="selectorContrato" aria-label=".form-select-sm example">
-                                    <option selected="">Seleccionar...</option>
-                                    <option value="1">Indefinido</option>
-                                    <option value="2">Tomporal</option>
-                                </select>
-                            </div>
-                            <!-- TODO Rodrigo: Crear un select con opciones para el Estado del trabajador: Activo, En Incorporacion, En Ausencia-->
-                            <div class="col-12 col-md-12">
+                <form id="formularioRegistro">
+                    <div class="modal-body">
+                        <div class="container">
+                            <div class="row justify-content-center align-items-center g-2">
+                                <div class="col-12 col-md-12">
+                                    <label for="trabajadorNombre">Nombre</label>
+                                    <input type="text" class="form-control" id="trabajadorNombre" name="name" maxlength="20" required>
+                                </div>
+                                <div class="col-12 col-md-12">
+                                    <label for="trabajadorApellido">Primer Apellido</label>
+                                    <input type="text" class="form-control" id="trabajadorApellido" name="last_name" maxlength="20" required>
+                                </div>
+                                <div class="col-12 col-md-12">
+                                    <label for="trabajadorCorreo">Correo</label>
+                                    <input type="email" class="form-control" id="trabajadorCorreo" name="email" maxlength="60" placeholder="@horizonte.example" required>
+                                </div>
+                                <div class="col-12 col-md-12">
+                                    <label for="trabajadorPuesto">Puesto</label>
+                                    <input type="text" class="form-control" id="trabajadorPuesto" name="position"
+                                        list="listaPuestos" maxlength="30" required>
+                                    <datalist id="listaPuestos"></datalist>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="selectorSede">Ubicación Sede</label>
+                                    <select class="form-select form-select-sm" id="selectorSede" name="sede" required>
+                                        <option value="" selected>Seleccionar...</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="selectorDepartamento">Departamento</label>
+                                    <select class="form-select form-select-sm" id="selectorDepartamento" name="department" required>
+                                        <option value="" selected>Seleccionar sede primero...</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-12">
+                                    <label for="selectorContrato">Contrato</label>
+                                    <select class="form-select form-select-sm" id="selectorContrato" name="contract_type" required>
+                                        <option value="" selected>Seleccionar...</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-12">
+                                    <label for="trabajadorSalario">Salario</label>
+                                    <input type="number" class="form-control" id="trabajadorSalario" name="salary" min="500000" max="10000000" placeholder="553553" required>
+                                </div>
+                                <div class="col-12">
+                                    <div id="respuestaRegistro" class="alert alert-info d-none" role="alert"></div>
+                                </div>
                             </div>
                         </div>
-
                     </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="botonRegistrar">Agregar Empleado</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detalle de un empleado: se llena con GET /employee/getById/:id -->
+    <div class="modal fade" id="detalleEmpleado" tabindex="-1" aria-labelledby="detalleEmpleadoTitulo"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="detalleEmpleadoTitulo">Empleado</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
+                <div class="modal-body" id="detalleEmpleadoContenido">Cargando...</div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <!-- Cierra la pestaña simulando que el empleado se agregó con exito jeje-->
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Agregar Empleado</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -470,6 +482,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
+    <script src="js/directorio.js"></script>
 </body>
 
 </html>

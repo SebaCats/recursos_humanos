@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/:path((?:health|login|logout|check-session)|(?:(?:api|employee)/.*))",
+      "destination": "https://backend-rh-vy7d.vercel.app/:path"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/:path((?:health|login|logout|check-session)|(?:(?:api|employee)/.*))",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "x-vercel-enable-rewrite-caching", "value": "0" }
+      ]
+    }
+  ]
+}
