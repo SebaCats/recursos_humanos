@@ -4,7 +4,7 @@
 
 Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS**, **JavaScript** y **Bootstrap 5**. Incluye un resumen ejecutivo con indicadores y gráficas, un directorio de empleados y autenticación mediante **cookie de sesión HttpOnly** emitida por el backend.
 
-> **Proyecto en desarrollo:** el frontend consume autenticación, catálogos, reportes, directorio, detalle de empleado y alta. Quedan como elementos visuales la paginación, el filtro de estado, "Exportar", "Columnas" y las secciones de decisiones/actividad.
+> **Proyecto en desarrollo:** el frontend consume autenticación, catálogos, reportes, directorio (con paginación y filtros), detalle de empleado y alta. Quedan como elementos visuales el filtro de estado, "Exportar", "Columnas" y las secciones de decisiones/actividad.
 
 ## Estado actual
 
@@ -13,7 +13,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 | Login, logout y verificación de sesión (`/login`, `/logout`, `/check-session`) | Terminado |
 | Endpoints de datos y reportes (`/api/*`) | Terminado |
 | Resumen | Conectado a `/api/resumen`, evolución, distribución y nómina real |
-| Directorio | Conectado a `GET /employee/getAll`, catálogos, filtros y detalle por id |
+| Directorio | Conectado a `GET /employee/getPage`, paginación, catálogos, filtros y detalle por id |
 | Formulario de alta | Conectado a `POST /employee/create` con catálogos dinámicos |
 | Formulario de login | Conectado al backend real |
 
@@ -29,8 +29,8 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 
 **Directorio** (`directorio.html`):
 - Tarjetas de indicadores alimentadas por `/api/resumen`, `/api/evolucionContrataciones` y `/api/empleadosBySede`.
-- Buscador que filtra por nombre, correo o ID, más filtros funcionales de departamento, sede y contrato.
-- Tabla cargada desde `GET /employee/getAll`; al pulsar un nombre se consulta `GET /employee/getById/:id`.
+- Buscador que filtra por nombre, correo o ID, más filtros funcionales de departamento, sede y contrato. Buscar o filtrar reinicia la paginación.
+- Tabla paginada (10 filas por página) cargada desde `GET /employee/getPage`; al pulsar un nombre se consulta `GET /employee/getById/:id`. Si el backend aún no tiene ese endpoint, se usa `GET /employee/getAll` y se pagina en el cliente.
 - Modal "Añadir empleado" con sedes, departamentos, tipos de contrato y puestos cargados desde `GET /api/catalogos`. Envía `POST /employee/create` y muestra la contraseña temporal.
 
 **Inicio de sesión** (`login.html`):
@@ -148,6 +148,8 @@ GET /api/salarioByDepartamento       -> [{ "nombre": "Tecnología", "sede": "SOU
 GET /api/evolucionContrataciones     -> [{ "mes": "2026-11", "cantidad": 2 }, ...]
 GET /api/catalogos                   -> { roles, sedes, departments, contractTypes, positions }
 GET /employee/getAll                 -> { "employees": [...] }
+GET /employee/getPage?page=1&limit=10&q=&department=&sede=&contract_type=
+                                     -> { "employees": [...], "pagination": { "page": 1, "limit": 10, "total": 23, "totalPages": 3 } }
 GET /employee/getById/:id            -> { "employee": {...} }
 POST /employee/create                -> { "result": { "temporaryPassword": "..." } }
 ```
@@ -164,6 +166,7 @@ Si alguna petición falla se registra en consola; las secciones afectadas muestr
 | Gráfica de altas | `myChart`, `evolucionDetalle` | `js/graficas.js` + `js/resumen.js` |
 | KPIs del directorio | `directorioPersonasActivas`, `directorioCobertura`, `directorioIncorporaciones` | `js/directorio.js` |
 | Filtros y catálogos | `listaFiltro*`, `selectorSede`, `selectorDepartamento`, `selectorContrato`, `listaPuestos` | `js/directorio.js` |
+| Paginación del directorio | `paginacionEmpleados`, `directorioPaginadoText` | `js/directorio.js` |
 | Detalle de empleado | `detalleEmpleado` | `js/directorio.js` |
 
 ---
@@ -187,6 +190,7 @@ El frontend espera que el backend esté ejecutándose en `http://localhost:3000`
 | `GET` | `/api/evolucionContrataciones` | `[{ mes, cantidad }]` de los últimos 12 meses. Alimenta la gráfica. |
 | `GET` | `/api/catalogos` | Roles, sedes, departamentos, tipos de contrato y puestos para el formulario y filtros. |
 | `GET` | `/employee/getAll` | `{ "employees": [...] }` con los datos completos del contrato, departamento, sede y rol. |
+| `GET` | `/employee/getPage` | Página del directorio con `{ "employees": [...], "pagination": { page, limit, total, totalPages } }`. Acepta `page`, `limit`, `q`, `department`, `sede` y `contract_type`. |
 | `GET` | `/employee/getById/:id` | `{ "employee": {...} }`. Alimenta el modal de detalle. |
 | `POST` | `/employee/create` | Alta de empleado y contrato. Si no se envía `password`, la respuesta incluye `result.temporaryPassword`. |
 
@@ -209,7 +213,7 @@ Al ser un sitio estático, se puede publicar directamente:
 ## Limitaciones conocidas
 
 - **Datos:** el resumen, la gráfica de altas, el directorio, los catálogos y el alta usan datos reales. Las tarjetas de rotación/ausentismo, la bandeja de decisiones y la actividad reciente siguen siendo ejemplos (la BD no registra bajas ni ausencias).
-- **Directorio:** los filtros de departamento, sede y contrato funcionan; el filtro de estado, "Exportar", "Columnas" y la paginación siguen siendo elementos visuales.
+- **Directorio:** la paginación y los filtros de departamento, sede y contrato funcionan; el filtro de estado, "Exportar" y "Columnas" siguen siendo elementos visuales.
 - **Contratos:** la BD no tiene fecha de vencimiento, por lo que la tarjeta "Contratos próximos a vencer" no se calcula desde la API.
 - **API:** requiere que el backend esté disponible en `http://localhost:3000` (o la URL configurada) con CORS y credenciales habilitados.
 - **Sesión:** la cookie es `HttpOnly`, por lo que el frontend no puede leerla; el estado se consulta con `/check-session`.
