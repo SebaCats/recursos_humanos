@@ -47,7 +47,6 @@
                 data-bs-target="#modalCambiarContrasena">
                 Cambiar contraseña
             </button>
-        
         </div>
     </aside>
 
@@ -256,7 +255,47 @@
                 </article>
             </div>
         </main>
+    </div>
 
+    <!-- Modal Cambiar Contraseña -->
+    <div class="modal fade" id="modalCambiarContrasena" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="tituloCambiarContrasena" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tituloCambiarContrasena">Cambiar contraseña</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form id="formCambiarContrasena" novalidate>
+                    <div class="modal-body">
+                        <div id="alertaCambioPass" class="alert d-none" role="alert"></div>
+
+                        <div class="mb-3">
+                            <label for="passActual" class="form-label">Contraseña actual</label>
+                            <input type="password" class="form-control" id="passActual" required>
+                            <div class="invalid-feedback">Ingresa tu contraseña actual.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="passNueva" class="form-label">Nueva contraseña</label>
+                            <input type="password" class="form-control" id="passNueva" minlength="8" required>
+                            <div class="form-text">Mínimo 8 caracteres.</div>
+                            <div class="invalid-feedback">La nueva contraseña debe tener al menos 8 caracteres.</div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label for="passConfirmar" class="form-label">Confirmar nueva contraseña</label>
+                            <input type="password" class="form-control" id="passConfirmar" required>
+                            <div class="invalid-feedback">Las contraseñas no coinciden.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar contraseña</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
