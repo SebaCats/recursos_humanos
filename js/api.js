@@ -68,6 +68,17 @@ window.HORIZON_API = Object.freeze({
 
     getEmployees: () => request('/employee/getAll'),
 
+    // Paginación del directorio. Los filtros se envían al backend para que el
+    // total y las páginas se calculen sobre todos los empleados, no solo los
+    // que caben en la página actual.
+    getEmployeesPage: ({ page = 1, limit = 10, q = '', department = '', sede = '', contract_type = '' } = {}) => {
+        const parametros = new URLSearchParams({ page: String(page), limit: String(limit) })
+        for (const [clave, valor] of Object.entries({ q, department, sede, contract_type })) {
+            if (valor) parametros.set(clave, String(valor))
+        }
+        return request(`/employee/getPage?${parametros}`)
+    },
+
     getEmployeeById: (id) => request(`/employee/getById/${encodeURIComponent(id)}`),
 
     createEmployee: (empleado) => request('/employee/create', {
