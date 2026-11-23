@@ -113,9 +113,16 @@
                     <!-- Card evolución plantilla -->
                     <div class="col-8">
                         <article class="card shadow-b p-3 h-100">
-                            <section>
-                                <h4>Evolución de la plantilla</h4>
-                                <small class="text-body-tertiary">Altas de contrato por mes (últimos 12 meses)</small>
+                            <section class="d-flex justify-content-between align-items-start gap-2">
+                                <div>
+                                    <h4>Evolución de la plantilla</h4>
+                                    <small id="evolucionSubtitulo" class="text-body-tertiary">Altas de contrato por mes
+                                        (últimos 12 meses)</small>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="btnPeriodoEvolucion"
+                                    aria-pressed="false">
+                                    Ver semana actual
+                                </button>
                             </section>
                             <canvas style="max-height: 250px;" id="myChart" role="img"
                                 aria-label="Evolución mensual de la plantilla activa"></canvas>

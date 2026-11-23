@@ -24,32 +24,63 @@ function mensajeDeError(data, status) {
 }
 
 const MESES_EVOLUCION = 12
+const DIAS_EVOLUCION = 7
+
+function extraerCantidades(evolucion, campo, longitud) {
+    const porFecha = new Map()
+
+    if (Array.isArray(evolucion)) {
+        for (const fila of evolucion) {
+            const valor = fila?.[campo]
+            if (typeof valor !== 'string') continue
+
+            const clave = valor.slice(0, longitud)
+            if (!/^\d{4}-\d{2}(-\d{2})?$/.test(clave)) continue
+
+            const cantidad = Number(fila.cantidad ?? 0)
+            porFecha.set(clave, (porFecha.get(clave) ?? 0) + (Number.isFinite(cantidad) ? cantidad : 0))
+        }
+    }
+
+    return porFecha
+}
 
 // El backend agrupa por mes y omite los que no tienen altas. Se completan con
 // 0 para que la gráfica cubra siempre los últimos 12 meses, mes actual incluido.
 function normalizarEvolucion(evolucion) {
-    const porMes = new Map()
-
-    if (Array.isArray(evolucion)) {
-        for (const fila of evolucion) {
-            if (typeof fila?.mes !== 'string') continue
-            const mes = fila.mes.slice(0, 7)
-            if (!/^\d{4}-\d{2}$/.test(mes)) continue
-
-            const cantidad = Number(fila.cantidad ?? 0)
-            porMes.set(mes, (porMes.get(mes) ?? 0) + (Number.isFinite(cantidad) ? cantidad : 0))
-        }
-    }
-
+    const porMes = extraerCantidades(evolucion, 'mes', 7)
     const ahora = new Date()
+
     return Array.from({ length: MESES_EVOLUCION }, (_, indice) => {
         const fecha = new Date(Date.UTC(
             ahora.getFullYear(),
             ahora.getMonth() - (MESES_EVOLUCION - 1 - indice),
             1
         ))
-        const mes = `${fecha.getUTCFullYear()}-${String(fecha.getUTCMonth() + 1).padStart(2, '0')}`
-        return { mes, cantidad: porMes.get(mes) ?? 0 }
+        const clave = `${fecha.getUTCFullYear()}-${String(fecha.getUTCMonth() + 1).padStart(2, '0')}`
+        return { fecha: clave, cantidad: porMes.get(clave) ?? 0 }
+    })
+}
+
+function inicioSemana(fecha) {
+    const inicio = new Date(Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()))
+    inicio.setUTCDate(inicio.getUTCDate() - ((inicio.getUTCDay() + 6) % 7))
+    return inicio
+}
+
+// El endpoint semanal ya devuelve los 7 días, pero se normaliza igual para que
+// la gráfica tenga una serie continua aunque falte algún día en la respuesta.
+function normalizarEvolucionSemana(evolucion) {
+    const porDia = extraerCantidades(evolucion, 'fecha', 10)
+    const claves = [...porDia.keys()].sort()
+    const primera = claves.length ? new Date(`${claves[0]}T00:00:00Z`) : inicioSemana(new Date())
+    const inicio = Number.isNaN(primera.getTime()) ? inicioSemana(new Date()) : primera
+
+    return Array.from({ length: DIAS_EVOLUCION }, (_, indice) => {
+        const fecha = new Date(inicio)
+        fecha.setUTCDate(fecha.getUTCDate() + indice)
+        const clave = fecha.toISOString().slice(0, 10)
+        return { fecha: clave, cantidad: porDia.get(clave) ?? 0 }
     })
 }
 
@@ -82,6 +113,7 @@ async function request(ruta, opciones = {}) {
 window.HORIZON_API = Object.freeze({
     ApiError,
     normalizarEvolucion,
+    normalizarEvolucionSemana,
 
     login: (credenciales) => request('/login', {
         method: 'POST',
@@ -140,5 +172,8 @@ window.HORIZON_API = Object.freeze({
     getEmpleadosByContractType: () => request('/api/empleadosByContractType'),
     getSalarioByDepartamento: () => request('/api/salarioByDepartamento'),
     getEvolucionContrataciones: async () =>
-        normalizarEvolucion(await request('/api/evolucionContrataciones'))
+        normalizarEvolucion(await request('/api/evolucionContrataciones')),
+
+    getEvolucionContratacionesSemana: async () =>
+        normalizarEvolucionSemana(await request('/api/evolucionContratacionesSemanal'))
 })

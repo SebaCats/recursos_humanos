@@ -6,16 +6,30 @@ const formatoMoneda = new Intl.NumberFormat('es-CO', {
 })
 const etiquetasSede = { NORTH: 'Norte', CENTER: 'Centro', SOUTH: 'Sur' }
 
+let periodoEvolucion = 'mes'
+let datosResumen = null
+
 function setText(id, texto) {
     const elemento = document.getElementById(id)
     if (elemento) elemento.textContent = texto
 }
 
-function etiquetaMes(mes) {
-    if (typeof mes !== 'string' || !/^\d{4}-\d{2}$/.test(mes)) return mes ?? ''
-    const texto = new Intl.DateTimeFormat('es-CO', { month: 'short' })
-        .format(new Date(`${mes}-01T00:00:00`))
-    return texto.charAt(0).toUpperCase() + texto.slice(1)
+function etiquetaFecha(fecha) {
+    if (typeof fecha !== 'string') return fecha ?? ''
+
+    if (/^\d{4}-\d{2}$/.test(fecha)) {
+        const texto = new Intl.DateTimeFormat('es-CO', { month: 'short', timeZone: 'UTC' })
+            .format(new Date(`${fecha}-01T00:00:00Z`))
+        return texto.charAt(0).toUpperCase() + texto.slice(1)
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+        const texto = new Intl.DateTimeFormat('es-CO', { weekday: 'short', timeZone: 'UTC' })
+            .format(new Date(`${fecha}T00:00:00Z`))
+        return texto.charAt(0).toUpperCase() + texto.slice(1)
+    }
+
+    return fecha
 }
 
 function etiquetaSede(nombre) {
@@ -31,7 +45,7 @@ function actualizarTotalSalario(total) {
     setText('totalNomina', `$${formatoNumero.format(Number(total ?? 0))}`)
 }
 
-function actualizarPlantillaDetalle(resumen, evolucion) {
+function actualizarPlantillaDetalle(resumen, evolucion, periodo) {
     if (!resumen) return
 
     const partes = [
@@ -43,19 +57,73 @@ function actualizarPlantillaDetalle(resumen, evolucion) {
         const actual = Number(evolucion.at(-1).cantidad ?? 0)
         const anterior = Number(evolucion.at(-2).cantidad ?? 0)
         const diferencia = actual - anterior
-        partes.push(`${diferencia >= 0 ? '+' : ''}${formatoNumero.format(diferencia)} altas vs. mes anterior`)
+        const comparacion = periodo === 'semana' ? 'día anterior' : 'mes anterior'
+        partes.push(`${diferencia >= 0 ? '+' : ''}${formatoNumero.format(diferencia)} altas vs. ${comparacion}`)
     }
 
     setText('plantillaDetalle', partes.join(' · '))
 }
 
-function actualizarEvolucionDetalle(evolucion) {
+function actualizarEvolucionDetalle(evolucion, periodo) {
     if (!Array.isArray(evolucion) || evolucion.length === 0) return
     const ultimo = evolucion.at(-1)
+    const prefijo = periodo === 'semana' ? 'Altas el' : 'Altas en'
     setText(
         'evolucionDetalle',
-        `Altas en ${etiquetaMes(ultimo.mes)}: ${formatoNumero.format(Number(ultimo.cantidad ?? 0))}`
+        `${prefijo} ${etiquetaFecha(ultimo.fecha)}: ${formatoNumero.format(Number(ultimo.cantidad ?? 0))}`
     )
+}
+
+function actualizarEvolucion(evolucion, periodo, fallo = false) {
+    const esSemana = periodo === 'semana'
+
+    setText(
+        'evolucionSubtitulo',
+        esSemana
+            ? 'Altas de contrato por día (semana actual)'
+            : 'Altas de contrato por mes (últimos 12 meses)'
+    )
+
+    const boton = document.getElementById('btnPeriodoEvolucion')
+    if (boton) {
+        boton.textContent = esSemana ? 'Ver 12 meses' : 'Ver semana actual'
+        boton.setAttribute('aria-pressed', String(esSemana))
+    }
+
+    actualizarPlantillaDetalle(datosResumen, evolucion, periodo)
+
+    if (fallo) {
+        setText('evolucionDetalle', 'No se pudo cargar la evolución')
+    } else {
+        actualizarEvolucionDetalle(evolucion, periodo)
+    }
+
+    if (typeof window.iniciarGraficas === 'function') {
+        window.iniciarGraficas(evolucion, periodo)
+    }
+}
+
+function configurarBotonEvolucion() {
+    const boton = document.getElementById('btnPeriodoEvolucion')
+    if (!boton) return
+
+    boton.addEventListener('click', async () => {
+        const periodo = periodoEvolucion === 'mes' ? 'semana' : 'mes'
+        boton.disabled = true
+
+        try {
+            const evolucion = periodo === 'semana'
+                ? await window.HORIZON_API.getEvolucionContratacionesSemana()
+                : await window.HORIZON_API.getEvolucionContrataciones()
+            periodoEvolucion = periodo
+            actualizarEvolucion(evolucion, periodo)
+        } catch (error) {
+            console.error('Error al cambiar el periodo de la evolución:', error)
+            setText('evolucionDetalle', 'No se pudo cargar la evolución')
+        } finally {
+            boton.disabled = false
+        }
+    })
 }
 
 function renderizarDepartamentos(departamentos) {
@@ -185,8 +253,9 @@ async function cargarResumen() {
         }
     }
 
-    const totalPlantilla = resumen.status === 'fulfilled'
-        ? Number(resumen.value.totalEmployees ?? 0)
+    datosResumen = resumen.status === 'fulfilled' ? resumen.value : null
+    const totalPlantilla = datosResumen
+        ? Number(datosResumen.totalEmployees ?? 0)
         : totalPorDepartamentos
     actualizarPlantilla(totalPlantilla)
 
@@ -195,19 +264,8 @@ async function cargarResumen() {
     }
 
     const datosEvolucion = evolucion.status === 'fulfilled' ? evolucion.value : []
-    actualizarPlantillaDetalle(
-        resumen.status === 'fulfilled' ? resumen.value : null,
-        datosEvolucion
-    )
-    if (evolucion.status === 'rejected') {
-        setText('evolucionDetalle', 'No se pudo cargar la evolución')
-    } else {
-        actualizarEvolucionDetalle(datosEvolucion)
-    }
-
-    if (typeof window.iniciarGraficas === 'function') {
-        window.iniciarGraficas(datosEvolucion)
-    }
+    actualizarEvolucion(datosEvolucion, 'mes', evolucion.status === 'rejected')
+    configurarBotonEvolucion()
 
     if (nomina.status === 'fulfilled') {
         renderizarNomina(nomina.value)
