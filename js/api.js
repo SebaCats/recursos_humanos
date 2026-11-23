@@ -23,6 +23,36 @@ function mensajeDeError(data, status) {
     return status === 401 ? 'Sesión inválida o expirada' : 'Error en la petición'
 }
 
+const MESES_EVOLUCION = 12
+
+// El backend agrupa por mes y omite los que no tienen altas. Se completan con
+// 0 para que la gráfica cubra siempre los últimos 12 meses, mes actual incluido.
+function normalizarEvolucion(evolucion) {
+    const porMes = new Map()
+
+    if (Array.isArray(evolucion)) {
+        for (const fila of evolucion) {
+            if (typeof fila?.mes !== 'string') continue
+            const mes = fila.mes.slice(0, 7)
+            if (!/^\d{4}-\d{2}$/.test(mes)) continue
+
+            const cantidad = Number(fila.cantidad ?? 0)
+            porMes.set(mes, (porMes.get(mes) ?? 0) + (Number.isFinite(cantidad) ? cantidad : 0))
+        }
+    }
+
+    const ahora = new Date()
+    return Array.from({ length: MESES_EVOLUCION }, (_, indice) => {
+        const fecha = new Date(Date.UTC(
+            ahora.getFullYear(),
+            ahora.getMonth() - (MESES_EVOLUCION - 1 - indice),
+            1
+        ))
+        const mes = `${fecha.getUTCFullYear()}-${String(fecha.getUTCMonth() + 1).padStart(2, '0')}`
+        return { mes, cantidad: porMes.get(mes) ?? 0 }
+    })
+}
+
 async function request(ruta, opciones = {}) {
     const { body, redirigirSi401 = true, ...init } = opciones
 
@@ -51,6 +81,7 @@ async function request(ruta, opciones = {}) {
 
 window.HORIZON_API = Object.freeze({
     ApiError,
+    normalizarEvolucion,
 
     login: (credenciales) => request('/login', {
         method: 'POST',
@@ -108,5 +139,6 @@ window.HORIZON_API = Object.freeze({
     getEmpleadosByRole: () => request('/api/empleadosByRole'),
     getEmpleadosByContractType: () => request('/api/empleadosByContractType'),
     getSalarioByDepartamento: () => request('/api/salarioByDepartamento'),
-    getEvolucionContrataciones: () => request('/api/evolucionContrataciones')
+    getEvolucionContrataciones: async () =>
+        normalizarEvolucion(await request('/api/evolucionContrataciones'))
 })

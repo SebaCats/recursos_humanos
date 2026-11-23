@@ -23,7 +23,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 **Resumen** (`index.html`):
 - Página de entrada del panel.
 - Plantilla activa y cobertura desde `GET /api/resumen`; nómina desde `GET /api/totalSalario`.
-- Gráfica de altas de contrato con Chart.js alimentada por `GET /api/evolucionContrataciones`.
+- Gráfica de altas de contrato con Chart.js alimentada por `GET /api/evolucionContrataciones`. El cliente completa con 0 los meses sin altas, así que siempre se muestran los últimos 12 meses (mes actual incluido).
 - Distribución por departamento, sedes, roles y tipos de contrato desde `/api/*`.
 - Nómina por departamento construida con `GET /api/salarioByDepartamento`.
 - Bandeja de decisiones y actividad reciente (datos de ejemplo).
@@ -152,7 +152,7 @@ GET /api/empleadosBySede             -> [{ "nombre": "NORTH", "cantidad": 1 }, .
 GET /api/empleadosByRole             -> [{ "nombre": "GUEST", "cantidad": 2 }, ...]
 GET /api/empleadosByContractType     -> [{ "nombre": "Indefinido", "cantidad": 1 }, ...]
 GET /api/salarioByDepartamento       -> [{ "nombre": "Tecnología", "sede": "SOUTH", "total": 1200000 }, ...]
-GET /api/evolucionContrataciones     -> [{ "mes": "2026-11", "cantidad": 2 }, ...]
+GET /api/evolucionContrataciones     -> [{ "mes": "2026-11", "cantidad": 2 }, ...] (meses sin altas se completan en el cliente hasta 12)
 GET /api/catalogos                   -> { roles, sedes, departments, contractTypes, positions }
 GET /employee/getAll                 -> { "employees": [...] }
 GET /employee/getPage?page=1&limit=10&q=&department=&sede=&contract_type=
@@ -163,7 +163,9 @@ POST /employee/change-password       -> { "message": "Contraseña actualizada" }
                                         body: { "currentPassword": "...", "newPassword": "..." }
 ```
 
-Si alguna petición falla se registra en consola; las secciones afectadas muestran guiones o valores vacíos en lugar de datos inventados.
+`js/api.js` normaliza la evolución a 12 meses: si el backend omite meses sin contratos, se añaden con `cantidad: 0`. Así la gráfica y el indicador de incorporaciones usan siempre la misma ventana de 12 meses.
+
+Si alguna petición falla se registra en consola; las secciones afectadas muestran guiones o valores vacíos en lugar de datos inventados. Si falla la evolución, la gráfica se pinta en cero y el detalle indica que no se pudo cargar.
 
 | Elemento | ID | Archivo que lo actualiza |
 | -------- | -- | ------------------------ |
@@ -196,7 +198,7 @@ El frontend espera que el backend esté ejecutándose en `http://localhost:3000`
 | `GET` | `/api/resumen` | Totales de empleados, contratos, departamentos, sedes y salario promedio. |
 | `GET` | `/api/empleadosBySede`, `/api/empleadosByRole`, `/api/empleadosByContractType` | Conteos con `{ nombre, cantidad }` para KPIs y distribución. |
 | `GET` | `/api/salarioByDepartamento` | `[{ nombre, sede, total }]`. Nómina agrupada por departamento y sede. |
-| `GET` | `/api/evolucionContrataciones` | `[{ mes, cantidad }]` de los últimos 12 meses. Alimenta la gráfica. |
+| `GET` | `/api/evolucionContrataciones` | `[{ mes, cantidad }]` de los últimos 12 meses. El backend omite meses sin altas; `js/api.js` los completa con `0` para que la gráfica tenga siempre 12 puntos. |
 | `GET` | `/api/catalogos` | Roles, sedes, departamentos, tipos de contrato y puestos para el formulario y filtros. |
 | `GET` | `/employee/getAll` | `{ "employees": [...] }` con los datos completos del contrato, departamento, sede y rol. |
 | `GET` | `/employee/getPage` | Página del directorio con `{ "employees": [...], "pagination": { page, limit, total, totalPages } }`. Acepta `page`, `limit`, `q`, `department`, `sede` y `contract_type`. |

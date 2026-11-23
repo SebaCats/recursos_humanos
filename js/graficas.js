@@ -1,13 +1,9 @@
 /**
  * Gráfica de altas de contrato del resumen.
  * `resumen.js` obtiene los datos de /api/evolucionContrataciones y llama a
- * `window.iniciarGraficas(evolucion)`. Si no llegan datos se conserva un
- * ejemplo mínimo para que el canvas nunca quede vacío.
+ * `window.iniciarGraficas(evolucion)`. El cliente del API garantiza 12 meses;
+ * si no llegan datos se pintan esos 12 meses en cero, sin ejemplos inventados.
  */
-const EVOLUCION_PLANTILLA = {
-    etiquetas: ['Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct'],
-    valores: [228, 231, 235, 238, 241, 244, 245, 250]
-}
 
 function etiquetaMes(mes) {
     if (typeof mes !== 'string' || !/^\d{4}-\d{2}$/.test(mes)) return mes ?? ''
@@ -16,12 +12,12 @@ function etiquetaMes(mes) {
     return texto.charAt(0).toUpperCase() + texto.slice(1)
 }
 
-function normalizarEvolucion(evolucion) {
-    if (!Array.isArray(evolucion) || evolucion.length === 0) return EVOLUCION_PLANTILLA
+function prepararDatos(evolucion) {
+    const filas = window.HORIZON_API?.normalizarEvolucion?.(evolucion) ?? []
 
     return {
-        etiquetas: evolucion.map((fila) => etiquetaMes(fila.mes)),
-        valores: evolucion.map((fila) => Number(fila.cantidad ?? 0))
+        etiquetas: filas.map((fila) => etiquetaMes(fila.mes)),
+        valores: filas.map((fila) => Number(fila.cantidad ?? 0))
     }
 }
 
@@ -31,7 +27,7 @@ function iniciarGraficas(evolucion) {
     const lienzo = document.getElementById('myChart')
     if (!lienzo) return
 
-    const datos = normalizarEvolucion(evolucion)
+    const datos = prepararDatos(evolucion)
 
     // Evita el error "Canvas is already in use" al volver a renderizar la vista.
     const instanciaPrevia = Chart.getChart(lienzo)

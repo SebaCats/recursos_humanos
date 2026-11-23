@@ -199,7 +199,11 @@ async function cargarResumen() {
         resumen.status === 'fulfilled' ? resumen.value : null,
         datosEvolucion
     )
-    actualizarEvolucionDetalle(datosEvolucion)
+    if (evolucion.status === 'rejected') {
+        setText('evolucionDetalle', 'No se pudo cargar la evolución')
+    } else {
+        actualizarEvolucionDetalle(datosEvolucion)
+    }
 
     if (typeof window.iniciarGraficas === 'function') {
         window.iniciarGraficas(datosEvolucion)
