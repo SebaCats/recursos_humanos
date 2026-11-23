@@ -67,10 +67,17 @@ function actualizarPlantillaDetalle(resumen, evolucion, periodo) {
 function actualizarEvolucionDetalle(evolucion, periodo) {
     if (!Array.isArray(evolucion) || evolucion.length === 0) return
     const ultimo = evolucion.at(-1)
-    const prefijo = periodo === 'semana' ? 'Altas el' : 'Altas en'
+    const altas = formatoNumero.format(Number(ultimo.cantidad ?? 0))
+
+    if (periodo === 'semana') {
+        setText('evolucionDetalle', `Altas el ${etiquetaFecha(ultimo.fecha)}: ${altas}`)
+        return
+    }
+
+    const plantilla = formatoNumero.format(Number(ultimo.plantilla ?? 0))
     setText(
         'evolucionDetalle',
-        `${prefijo} ${etiquetaFecha(ultimo.fecha)}: ${formatoNumero.format(Number(ultimo.cantidad ?? 0))}`
+        `Altas en ${etiquetaFecha(ultimo.fecha)}: ${altas} · plantilla ${plantilla}`
     )
 }
 
@@ -81,7 +88,7 @@ function actualizarEvolucion(evolucion, periodo, fallo = false) {
         'evolucionSubtitulo',
         esSemana
             ? 'Altas de contrato por día (semana actual)'
-            : 'Altas de contrato por mes (últimos 12 meses)'
+            : 'Altas y plantilla activa por mes (últimos 12 meses)'
     )
 
     const boton = document.getElementById('btnPeriodoEvolucion')

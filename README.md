@@ -23,7 +23,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 **Resumen** (`index.html`):
 - Página de entrada del panel.
 - Plantilla activa y cobertura desde `GET /api/resumen`; nómina desde `GET /api/totalSalario`.
-- Gráfica de altas de contrato con Chart.js. El botón “Ver semana actual” / “Ver 12 meses” alterna entre `GET /api/evolucionContratacionesSemanal` (7 días, lunes a domingo) y `GET /api/evolucionContrataciones` (12 meses). El cliente completa los periodos sin altas con 0.
+- Gráfica de altas y plantilla activa con Chart.js: en la vista mensual las altas son barras y la plantilla acumulada una línea; en la semanal se muestran solo las altas por día. El botón “Ver semana actual” / “Ver 12 meses” alterna entre `GET /api/evolucionContratacionesSemanal` (7 días, lunes a domingo) y `GET /api/evolucionContrataciones` (12 meses). El cliente completa los periodos sin altas con 0.
 - Distribución por departamento, sedes, roles y tipos de contrato desde `/api/*`.
 - Nómina por departamento construida con `GET /api/salarioByDepartamento`; el coste previsto usa `GET /api/nomina` y cae al salario vigente si no hay cierre.
 - Rotación, ausentismo, contratos por vencer, bandeja de decisiones, actividad reciente y próximo hito alimentados por `/api/rotacion`, `/api/ausentismo`, `/api/contratosPorVencer`, `/api/decisiones`, `/api/actividad` y `/api/hitos`.
@@ -152,7 +152,7 @@ GET /api/empleadosBySede             -> [{ "nombre": "NORTH", "cantidad": 1 }, .
 GET /api/empleadosByRole             -> [{ "nombre": "GUEST", "cantidad": 2 }, ...]
 GET /api/empleadosByContractType     -> [{ "nombre": "Indefinido", "cantidad": 1 }, ...]
 GET /api/salarioByDepartamento       -> [{ "nombre": "Tecnología", "sede": "SOUTH", "total": 1200000 }, ...]
-GET /api/evolucionContrataciones          -> [{ "mes": "2026-11", "cantidad": 2 }, ...] (meses sin altas se completan en el cliente hasta 12)
+GET /api/evolucionContrataciones          -> [{ "mes": "2026-11", "cantidad": 6, "plantilla": 5 }, ...] (12 meses; altas del mes y plantilla acumulada)
 GET /api/evolucionContratacionesSemanal   -> [{ "fecha": "2026-11-23", "cantidad": 1 }, ...] (7 días de lunes a domingo)
 GET /api/catalogos                   -> { roles, sedes, departments, contractTypes, positions }
 GET /api/rotacion                    -> { total, tasa, variacion, empleados }
@@ -184,7 +184,7 @@ Si alguna petición falla se registra en consola; las secciones afectadas muestr
 | Barras por departamento | `progressDiv` | `js/resumen.js` |
 | Nómina por departamento | `nominaPorDepartamento` | `js/resumen.js` |
 | Distribución por sede/rol/contrato | `distribucionDetalle` | `js/resumen.js` |
-| Gráfica de altas | `myChart`, `evolucionDetalle`, `evolucionSubtitulo`, `btnPeriodoEvolucion` | `js/graficas.js` + `js/resumen.js` |
+| Gráfica de altas y plantilla | `myChart`, `evolucionDetalle`, `evolucionSubtitulo`, `btnPeriodoEvolucion` | `js/graficas.js` + `js/resumen.js` |
 | Bandeja y actividad | `decisionesBody`, `decisionesDetalle`, `actividadLista`, `actividadDetalle` | `js/resumen.js` |
 | Próximo hito | `proximoHito`, `proximoHitoDetalle` | `js/resumen.js` |
 | KPIs del directorio | `directorioPersonasActivas`, `directorioCobertura`, `directorioIncorporaciones`, `directorioContratosVencer`, `directorioExpedientesCompletos` | `js/directorio.js` |
@@ -210,7 +210,7 @@ El frontend espera que el backend esté ejecutándose en `http://localhost:3000`
 | `GET` | `/api/resumen` | Totales de empleados, contratos, departamentos, sedes y salario promedio. |
 | `GET` | `/api/empleadosBySede`, `/api/empleadosByRole`, `/api/empleadosByContractType` | Conteos con `{ nombre, cantidad }` para KPIs y distribución. |
 | `GET` | `/api/salarioByDepartamento` | `[{ nombre, sede, total }]`. Nómina agrupada por departamento y sede. |
-| `GET` | `/api/evolucionContrataciones` | `[{ mes, cantidad }]` de los últimos 12 meses. El backend omite meses sin altas; `js/api.js` los completa con `0`. |
+| `GET` | `/api/evolucionContrataciones` | `[{ mes, cantidad, plantilla }]` de los últimos 12 meses. `js/api.js` garantiza la serie continua y reconstruye la plantilla si el backend no la envía. |
 | `GET` | `/api/evolucionContratacionesSemanal` | `[{ fecha, cantidad }]` de lunes a domingo de la semana actual. Lo consume el botón de la gráfica. |
 | `GET` | `/api/catalogos` | Roles, sedes, departamentos, tipos de contrato y puestos para el formulario y filtros. |
 | `GET` | `/employee/getAll` | `{ "employees": [...] }` con los datos completos del contrato, departamento, sede y rol. |

@@ -45,11 +45,28 @@ function extraerCantidades(evolucion, campo, longitud) {
     return porFecha
 }
 
-// El backend agrupa por mes y omite los que no tienen altas. Se completan con
-// 0 para que la gráfica cubra siempre los últimos 12 meses, mes actual incluido.
+// El backend devuelve los 12 meses con altas y plantilla acumulada. Se vuelve
+// a completar por si una versión anterior solo envía los meses con altas: en
+// ese caso la plantilla se reconstruye sumando las altas mensuales.
 function normalizarEvolucion(evolucion) {
     const porMes = extraerCantidades(evolucion, 'mes', 7)
+    const porPlantilla = new Map()
+
+    if (Array.isArray(evolucion)) {
+        for (const fila of evolucion) {
+            const valor = fila?.mes
+            if (typeof valor !== 'string') continue
+
+            const clave = valor.slice(0, 7)
+            if (!/^\d{4}-\d{2}$/.test(clave)) continue
+
+            const plantilla = Number(fila.plantilla ?? 0)
+            porPlantilla.set(clave, Number.isFinite(plantilla) ? plantilla : 0)
+        }
+    }
+
     const ahora = new Date()
+    let acumulado = 0
 
     return Array.from({ length: MESES_EVOLUCION }, (_, indice) => {
         const fecha = new Date(Date.UTC(
@@ -58,7 +75,13 @@ function normalizarEvolucion(evolucion) {
             1
         ))
         const clave = `${fecha.getUTCFullYear()}-${String(fecha.getUTCMonth() + 1).padStart(2, '0')}`
-        return { fecha: clave, cantidad: porMes.get(clave) ?? 0 }
+        const cantidad = porMes.get(clave) ?? 0
+
+        acumulado = porPlantilla.has(clave)
+            ? porPlantilla.get(clave)
+            : acumulado + cantidad
+
+        return { fecha: clave, cantidad, plantilla: acumulado }
     })
 }
 
