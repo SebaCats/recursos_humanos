@@ -27,7 +27,6 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 - Distribución por departamento, sedes, roles y tipos de contrato desde `/api/*`.
 - Nómina por departamento construida con `GET /api/salarioByDepartamento`; el coste previsto usa `GET /api/nomina` y cae al salario vigente si no hay cierre.
 - Rotación, ausentismo, contratos por vencer, bandeja de decisiones, actividad reciente y próximo hito alimentados por `/api/rotacion`, `/api/ausentismo`, `/api/contratosPorVencer`, `/api/decisiones`, `/api/actividad` y `/api/hitos`.
-- Las peticiones `GET` se reintentan una vez ante un `5xx` para tolerar conexiones cerradas en serverless.
 
 **Directorio** (`directorio.html`):
 - Tarjetas de indicadores alimentadas por `/api/resumen`, `/api/evolucionContrataciones`, `/api/empleadosBySede`, `/api/contratosPorVencer` y `/api/expedientes`.

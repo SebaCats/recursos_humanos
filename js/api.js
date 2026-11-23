@@ -84,7 +84,7 @@ function normalizarEvolucionSemana(evolucion) {
     })
 }
 
-async function request(ruta, opciones = {}, reintentos = 1) {
+async function request(ruta, opciones = {}) {
     const { body, redirigirSi401 = true, ...init } = opciones
 
     const respuesta = await fetch(`${API_BASE}${ruta}`, {
@@ -104,16 +104,6 @@ async function request(ruta, opciones = {}, reintentos = 1) {
         if (respuesta.status === 401 && redirigirSi401) {
             window.location.replace('./login.html')
         }
-
-        // En serverless un 500 puede ser una conexión a la BD que se cerró
-        // entre peticiones. Las lecturas se reintentan una vez; si vuelve a
-        // fallar se lanza el error normal para no ocultar fallos reales.
-        const metodo = (init.method ?? 'GET').toUpperCase()
-        if (metodo === 'GET' && respuesta.status >= 500 && reintentos > 0) {
-            await new Promise((resolver) => setTimeout(resolver, 200))
-            return request(ruta, opciones, reintentos - 1)
-        }
-
         throw new ApiError(mensajeDeError(data, respuesta.status), respuesta.status, data)
     }
 
