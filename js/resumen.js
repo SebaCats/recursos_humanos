@@ -219,6 +219,194 @@ function renderizarDistribucion(porSede, porRol, porContrato) {
     setText('distribucionDetalle', partes.join(' · '))
 }
 
+const formatoPorcentaje = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 })
+
+function textoPorcentaje(valor) {
+    return `${formatoPorcentaje.format(Number(valor ?? 0))} %`
+}
+
+function fechaCorta(fecha) {
+    if (typeof fecha !== 'string' || !fecha) return '—'
+    const [anio, mes, dia] = fecha.slice(0, 10).split('-').map(Number)
+    if (!anio || !mes || !dia) return fecha
+    const texto = new Intl.DateTimeFormat('es-CO', {
+        day: 'numeric',
+        month: 'short',
+        timeZone: 'UTC'
+    }).format(new Date(Date.UTC(anio, mes - 1, dia)))
+    return texto.charAt(0).toUpperCase() + texto.slice(1)
+}
+
+function celda(texto) {
+    const td = document.createElement('td')
+    td.textContent = texto ?? ''
+    return td
+}
+
+function renderizarRotacion(datos) {
+    if (!datos) {
+        setText('rotacionValor', '—')
+        setText('rotacionDetalle', 'No se pudo cargar la rotación')
+        return
+    }
+
+    setText('rotacionValor', textoPorcentaje(datos.tasa))
+    const variacion = Number(datos.variacion ?? 0)
+    const signo = variacion > 0 ? '+' : ''
+    setText(
+        'rotacionDetalle',
+        Number(datos.total ?? 0) === 0
+            ? 'Sin bajas en los últimos 12 meses'
+            : `${signo}${formatoPorcentaje.format(variacion)} pp · ${datos.total} ${datos.total === 1 ? 'baja' : 'bajas'} en 12 meses`
+    )
+}
+
+function renderizarAusentismo(datos) {
+    if (!datos) {
+        setText('ausentismoValor', '—')
+        setText('ausentismoDetalle', 'No se pudo cargar el ausentismo')
+        return
+    }
+
+    setText('ausentismoValor', textoPorcentaje(datos.tasa))
+    setText(
+        'ausentismoDetalle',
+        Number(datos.empleados ?? 0) === 0
+            ? 'Sin ausencias aprobadas este mes (objetivo: menos de 4 %)'
+            : `${datos.empleados} personas · ${formatoNumero.format(Number(datos.dias ?? 0))} días este mes`
+    )
+}
+
+function renderizarNominaDetalle(datos, salarioActual) {
+    if (datos?.period) {
+        actualizarTotalSalario(datos.total)
+        setText(
+            'nominaDetalle',
+            `${datos.period} · ${datos.status === 'PENDIENTE' ? 'pendiente de cierre' : 'cerrada'}`
+        )
+        return
+    }
+
+    actualizarTotalSalario(salarioActual)
+    setText('nominaDetalle', 'Sin cierre registrado · salario vigente')
+}
+
+function renderizarDecisiones(datos) {
+    const cuerpo = document.getElementById('decisionesBody')
+    if (!cuerpo) return
+
+    cuerpo.replaceChildren()
+
+    if (!datos || !Array.isArray(datos.lista) || datos.lista.length === 0) {
+        const fila = document.createElement('tr')
+        const columna = celda(datos ? 'No hay decisiones pendientes' : 'No se pudieron cargar las decisiones')
+        columna.colSpan = 4
+        columna.className = 'text-body-tertiary'
+        fila.append(columna)
+        cuerpo.append(fila)
+        setText('decisionesDetalle', 'Bandeja al día')
+        return
+    }
+
+    for (const solicitud of datos.lista) {
+        const fila = document.createElement('tr')
+        const solicitudTexto = [
+            solicitud.type,
+            solicitud.empleado ?? solicitud.title
+        ].filter(Boolean).join(' · ')
+        const estado = solicitud.status === 'INCIDENCIAS' ? '● Incidencias' : '● Pendiente'
+
+        fila.append(
+            celda(solicitudTexto),
+            celda(solicitud.responsable ?? 'Sin asignar'),
+            celda(fechaCorta(solicitud.vence)),
+            celda(estado)
+        )
+        cuerpo.append(fila)
+    }
+
+    setText('decisionesDetalle', `${datos.cantidad} ${datos.cantidad === 1 ? 'pendiente' : 'pendientes'}`)
+}
+
+function renderizarActividad(datos) {
+    const lista = document.getElementById('actividadLista')
+    if (!lista) return
+
+    lista.replaceChildren()
+
+    if (!Array.isArray(datos) || datos.length === 0) {
+        const item = document.createElement('li')
+        item.className = 'list-group-item text-body-tertiary'
+        item.textContent = datos ? 'Sin actividad registrada' : 'No se pudo cargar la actividad'
+        lista.append(item)
+        setText('actividadDetalle', 'Últimos movimientos')
+        return
+    }
+
+    for (const entrada of datos) {
+        const item = document.createElement('li')
+        item.className = 'list-group-item'
+        item.textContent = [entrada.actor, entrada.action, entrada.entity]
+            .filter(Boolean).join(' ')
+        lista.append(item)
+    }
+
+    setText('actividadDetalle', 'Últimos movimientos registrados')
+}
+
+function renderizarHito(dato) {
+    if (dato === undefined) {
+        setText('proximoHito', 'No se pudo cargar el próximo hito')
+        setText('proximoHitoDetalle', 'Vuelve a intentarlo en unos segundos')
+        return
+    }
+
+    if (!dato) {
+        setText('proximoHito', 'Sin hitos programados')
+        setText('proximoHitoDetalle', 'No hay hitos próximos registrados')
+        return
+    }
+
+    setText('proximoHito', `Próximo hito: ${dato.title}`)
+    setText(
+        'proximoHitoDetalle',
+        [dato.description, fechaCorta(dato.fecha), dato.owner].filter(Boolean).join(' · ')
+    )
+}
+
+async function cargarIndicadores(salarioActual) {
+    const nombres = [
+        'rotación', 'ausentismo', 'contratos por vencer', 'decisiones',
+        'actividad', 'hitos', 'nómina', 'expedientes'
+    ]
+
+    const peticiones = await Promise.allSettled([
+        window.HORIZON_API.getRotacion(),
+        window.HORIZON_API.getAusentismo(),
+        window.HORIZON_API.getContratosPorVencer(),
+        window.HORIZON_API.getDecisiones(),
+        window.HORIZON_API.getActividad(),
+        window.HORIZON_API.getHitos(),
+        window.HORIZON_API.getNomina(),
+        window.HORIZON_API.getExpedientes()
+    ])
+
+    peticiones.forEach((peticion, indice) => {
+        if (peticion.status === 'rejected') {
+            console.error(`Error al cargar ${nombres[indice]}:`, peticion.reason)
+        }
+    })
+
+    const valor = (indice) => peticiones[indice].status === 'fulfilled' ? peticiones[indice].value : null
+
+    renderizarRotacion(valor(0))
+    renderizarAusentismo(valor(1))
+    renderizarDecisiones(valor(3))
+    renderizarActividad(valor(4))
+    renderizarHito(peticiones[5].status === 'fulfilled' ? peticiones[5].value : undefined)
+    renderizarNominaDetalle(valor(6), salarioActual)
+}
+
 async function cargarResumen() {
     const nombres = [
         'departamentos', 'salario', 'resumen', 'evolución',
@@ -276,6 +464,8 @@ async function cargarResumen() {
         porRol.status === 'fulfilled' ? porRol.value : [],
         porContrato.status === 'fulfilled' ? porContrato.value : []
     )
+
+    await cargarIndicadores(salario.status === 'fulfilled' ? Number(salario.value?.total ?? 0) : 0)
 }
 
 document.addEventListener('DOMContentLoaded', cargarResumen)

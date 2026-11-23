@@ -84,24 +84,24 @@
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Rotación acumulada</section>
-                            <h1>2,8%</h1>
-                            <small class="text-success">-0,3 pp · últimos 12 meses</small>
+                            <h1 id="rotacionValor">—</h1>
+                            <small id="rotacionDetalle" class="text-success">Cargando rotación...</small>
                         </article>
                     </div>
                     <!-- Card ausentismo -->
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Ausentismo mensual</section>
-                            <h1>3,2%</h1>
-                            <small class="text-success">Objetivo interno: menos de 4 %</small>
+                            <h1 id="ausentismoValor">—</h1>
+                            <small id="ausentismoDetalle" class="text-success">Cargando ausentismo...</small>
                         </article>
                     </div>
                     <!-- Card coste nómina -->
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Coste de nómina previsto</section>
-                            <h1 id="totalNomina">$707.678.740</h1>
-                            <small class="text-success">Octubre · pendiente de cierre</small>
+                            <h1 id="totalNomina">—</h1>
+                            <small id="nominaDetalle" class="text-success">Cargando nómina...</small>
                         </article>
                     </div>
                 </div>
@@ -205,29 +205,14 @@
                                         <th scope="col">ESTADO</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="decisionesBody">
                                     <tr>
-                                        <td>Vacaciones · Ana García</td>
-                                        <td>Carlos Ruiz</td>
-                                        <td>Hoy</td>
-                                        <td>● Pendiente</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Revisión de nómina</td>
-                                        <td>Lucía Vega</td>
-                                        <td>28 oct</td>
-                                        <td>● Incidencias</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Contrato · Diego Pardo</td>
-                                        <td>Lucía Vega</td>
-                                        <td>21 oct</td>
-                                        <td>● Pendiente</td>
+                                        <td colspan="4" class="text-body-tertiary">Cargando decisiones...</td>
                                     </tr>
                                 </tbody>
                             </table>
                             <div class="d-flex justify-content-between h-100 align-items-end">
-                                <small class="text-primary">Ver los 7 pendientes →</small>
+                                <small id="decisionesDetalle" class="text-primary">Cargando...</small>
                             </div>
                         </article>
                     </div>
@@ -236,13 +221,10 @@
                         <article class="card shadow-b p-3 h-100">
                             <section>
                                 <h4>Actividad reciente</h4>
-                                <small class="text-body-tertiary">246 personas - plantilla actual</small>
+                                <small id="actividadDetalle" class="text-body-tertiary">Cargando actividad...</small>
                             </section>
-                            <ul class="list-group list-group-flush border-top-0">
-                                <li class="list-group-item">Marta Soler actualizó un objetivo</li>
-                                <li class="list-group-item">Diego Pardo completó su perfil</li>
-                                <li class="list-group-item">Carlos Ruiz aprobó 2 ausencias</li>
-                                <li class="list-group-item">Nómina de septiembre publicada</li>
+                            <ul id="actividadLista" class="list-group list-group-flush border-top-0">
+                                <li class="list-group-item text-body-tertiary">Cargando actividad...</li>
                             </ul>
                             <div class="d-flex justify-content-between h-100 align-items-end">
                                 <small class="text-primary">Abrir registro de actividad →</small>
@@ -255,10 +237,8 @@
 
             <div class="container-fluid p-0 my-3">
                 <article class="card shadow-b p-3 bg-primary-subtle border-0">
-                    <strong class="text-primary">Próximo hito: cierre de nóminas de octubre</strong>
-                    <small class="text-primary">Valida incidencias antes del 28 oct. El pago está previsto para el 30
-                        oct y
-                        requiere aprobación de Finanzas.</small>
+                    <strong id="proximoHito" class="text-primary">Cargando próximo hito...</strong>
+                    <small id="proximoHitoDetalle" class="text-primary">Cargando...</small>
                 </article>
             </div>
         </main>

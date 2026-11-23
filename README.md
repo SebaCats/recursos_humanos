@@ -12,7 +12,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 | ---- | ------ |
 | Login, logout y verificación de sesión (`/login`, `/logout`, `/check-session`) | Terminado |
 | Endpoints de datos y reportes (`/api/*`) | Terminado |
-| Resumen | Conectado a `/api/resumen`, evolución, distribución y nómina real |
+| Resumen | Conectado a `/api/resumen`, evolución, distribución, nómina y tablas de apoyo reales |
 | Directorio | Conectado a `GET /employee/getPage`, paginación, catálogos, filtros y detalle por id |
 | Formulario de alta | Conectado a `POST /employee/create` con catálogos dinámicos |
 | Formulario de login | Conectado al backend real |
@@ -25,11 +25,12 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 - Plantilla activa y cobertura desde `GET /api/resumen`; nómina desde `GET /api/totalSalario`.
 - Gráfica de altas de contrato con Chart.js. El botón “Ver semana actual” / “Ver 12 meses” alterna entre `GET /api/evolucionContratacionesSemanal` (7 días, lunes a domingo) y `GET /api/evolucionContrataciones` (12 meses). El cliente completa los periodos sin altas con 0.
 - Distribución por departamento, sedes, roles y tipos de contrato desde `/api/*`.
-- Nómina por departamento construida con `GET /api/salarioByDepartamento`.
-- Bandeja de decisiones y actividad reciente (datos de ejemplo).
+- Nómina por departamento construida con `GET /api/salarioByDepartamento`; el coste previsto usa `GET /api/nomina` y cae al salario vigente si no hay cierre.
+- Rotación, ausentismo, contratos por vencer, bandeja de decisiones, actividad reciente y próximo hito alimentados por `/api/rotacion`, `/api/ausentismo`, `/api/contratosPorVencer`, `/api/decisiones`, `/api/actividad` y `/api/hitos`.
+- Las peticiones `GET` se reintentan una vez ante un `5xx` para tolerar conexiones cerradas en serverless.
 
 **Directorio** (`directorio.html`):
-- Tarjetas de indicadores alimentadas por `/api/resumen`, `/api/evolucionContrataciones` y `/api/empleadosBySede`.
+- Tarjetas de indicadores alimentadas por `/api/resumen`, `/api/evolucionContrataciones`, `/api/empleadosBySede`, `/api/contratosPorVencer` y `/api/expedientes`.
 - Buscador que filtra por nombre, correo o ID, más filtros funcionales de departamento, sede y contrato. Buscar o filtrar reinicia la paginación.
 - Tabla paginada (10 filas por página) cargada desde `GET /employee/getPage`; al pulsar un nombre se consulta `GET /employee/getById/:id`. Si el backend aún no tiene ese endpoint, se usa `GET /employee/getAll` y se pagina en el cliente.
 - Modal "Añadir empleado" con sedes, departamentos, tipos de contrato y puestos cargados desde `GET /api/catalogos`. Envía `POST /employee/create` y muestra la contraseña temporal.
@@ -155,6 +156,14 @@ GET /api/salarioByDepartamento       -> [{ "nombre": "Tecnología", "sede": "SOU
 GET /api/evolucionContrataciones          -> [{ "mes": "2026-11", "cantidad": 2 }, ...] (meses sin altas se completan en el cliente hasta 12)
 GET /api/evolucionContratacionesSemanal   -> [{ "fecha": "2026-11-23", "cantidad": 1 }, ...] (7 días de lunes a domingo)
 GET /api/catalogos                   -> { roles, sedes, departments, contractTypes, positions }
+GET /api/rotacion                    -> { total, tasa, variacion, empleados }
+GET /api/ausentismo                  -> { empleados, plantilla, dias, tasa }
+GET /api/contratosPorVencer          -> { cantidad, lista: [{ nombre, departamento, fecha, dias }] }
+GET /api/decisiones                  -> { cantidad, lista: [{ id, type, title, empleado, responsable, vence, status }] }
+GET /api/actividad                   -> [{ id, actor, action, entity, entity_id, fecha }]
+GET /api/hitos                       -> { title, description, fecha, owner } | null
+GET /api/nomina                      -> { period, total, status }
+GET /api/expedientes                 -> { porcentaje, completos, total, pendientes }
 GET /employee/getAll                 -> { "employees": [...] }
 GET /employee/getPage?page=1&limit=10&q=&department=&sede=&contract_type=
                                      -> { "employees": [...], "pagination": { "page": 1, "limit": 10, "total": 23, "totalPages": 3 } }
@@ -171,12 +180,15 @@ Si alguna petición falla se registra en consola; las secciones afectadas muestr
 | Elemento | ID | Archivo que lo actualiza |
 | -------- | -- | ------------------------ |
 | Plantilla activa y detalle | `plantillaActiva`, `plantillaDetalle` | `js/resumen.js` |
-| Total de nómina | `totalNomina` | `js/resumen.js` |
+| Total de nómina | `totalNomina`, `nominaDetalle` | `js/resumen.js` |
+| Rotación y ausentismo | `rotacionValor`, `rotacionDetalle`, `ausentismoValor`, `ausentismoDetalle` | `js/resumen.js` |
 | Barras por departamento | `progressDiv` | `js/resumen.js` |
 | Nómina por departamento | `nominaPorDepartamento` | `js/resumen.js` |
 | Distribución por sede/rol/contrato | `distribucionDetalle` | `js/resumen.js` |
 | Gráfica de altas | `myChart`, `evolucionDetalle`, `evolucionSubtitulo`, `btnPeriodoEvolucion` | `js/graficas.js` + `js/resumen.js` |
-| KPIs del directorio | `directorioPersonasActivas`, `directorioCobertura`, `directorioIncorporaciones` | `js/directorio.js` |
+| Bandeja y actividad | `decisionesBody`, `decisionesDetalle`, `actividadLista`, `actividadDetalle` | `js/resumen.js` |
+| Próximo hito | `proximoHito`, `proximoHitoDetalle` | `js/resumen.js` |
+| KPIs del directorio | `directorioPersonasActivas`, `directorioCobertura`, `directorioIncorporaciones`, `directorioContratosVencer`, `directorioExpedientesCompletos` | `js/directorio.js` |
 | Filtros y catálogos | `listaFiltro*`, `selectorSede`, `selectorDepartamento`, `selectorContrato`, `listaPuestos` | `js/directorio.js` |
 | Paginación del directorio | `paginacionEmpleados`, `directorioPaginadoText` | `js/directorio.js` |
 | Detalle de empleado | `detalleEmpleado` | `js/directorio.js` |

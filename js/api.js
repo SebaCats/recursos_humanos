@@ -84,7 +84,7 @@ function normalizarEvolucionSemana(evolucion) {
     })
 }
 
-async function request(ruta, opciones = {}) {
+async function request(ruta, opciones = {}, reintentos = 1) {
     const { body, redirigirSi401 = true, ...init } = opciones
 
     const respuesta = await fetch(`${API_BASE}${ruta}`, {
@@ -104,6 +104,16 @@ async function request(ruta, opciones = {}) {
         if (respuesta.status === 401 && redirigirSi401) {
             window.location.replace('./login.html')
         }
+
+        // En serverless un 500 puede ser una conexión a la BD que se cerró
+        // entre peticiones. Las lecturas se reintentan una vez; si vuelve a
+        // fallar se lanza el error normal para no ocultar fallos reales.
+        const metodo = (init.method ?? 'GET').toUpperCase()
+        if (metodo === 'GET' && respuesta.status >= 500 && reintentos > 0) {
+            await new Promise((resolver) => setTimeout(resolver, 200))
+            return request(ruta, opciones, reintentos - 1)
+        }
+
         throw new ApiError(mensajeDeError(data, respuesta.status), respuesta.status, data)
     }
 
@@ -175,5 +185,15 @@ window.HORIZON_API = Object.freeze({
         normalizarEvolucion(await request('/api/evolucionContrataciones')),
 
     getEvolucionContratacionesSemana: async () =>
-        normalizarEvolucionSemana(await request('/api/evolucionContratacionesSemanal'))
+        normalizarEvolucionSemana(await request('/api/evolucionContratacionesSemanal')),
+
+    // Indicadores del dashboard que antes estaban hardcodeados.
+    getRotacion: () => request('/api/rotacion'),
+    getAusentismo: () => request('/api/ausentismo'),
+    getContratosPorVencer: () => request('/api/contratosPorVencer'),
+    getDecisiones: () => request('/api/decisiones'),
+    getActividad: () => request('/api/actividad'),
+    getHitos: () => request('/api/hitos'),
+    getNomina: () => request('/api/nomina'),
+    getExpedientes: () => request('/api/expedientes')
 })

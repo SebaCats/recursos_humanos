@@ -397,10 +397,12 @@ async function cargarCatalogos() {
 }
 
 async function cargarIndicadores() {
-    const [resumen, evolucion, porSede] = await Promise.allSettled([
+    const [resumen, evolucion, porSede, porVencer, expedientes] = await Promise.allSettled([
         window.HORIZON_API.getResumen(),
         window.HORIZON_API.getEvolucionContrataciones(),
-        window.HORIZON_API.getEmpleadosBySede()
+        window.HORIZON_API.getEmpleadosBySede(),
+        window.HORIZON_API.getContratosPorVencer(),
+        window.HORIZON_API.getExpedientes()
     ])
 
     if (resumen.status === 'fulfilled') {
@@ -429,6 +431,30 @@ async function cargarIndicadores() {
 
     if (porSede.status === 'rejected') {
         console.error('Error al cargar las sedes:', porSede.reason)
+    }
+
+    if (porVencer.status === 'fulfilled') {
+        const cantidad = Number(porVencer.value?.cantidad ?? 0)
+        setText('directorioContratosVencer', formatoNumero.format(cantidad))
+        setText(
+            'directorioContratosDetalle',
+            cantidad === 0 ? 'Ninguno en los próximos 60 días' : 'En los próximos 60 días'
+        )
+    } else {
+        console.error('Error al cargar los contratos por vencer:', porVencer.reason)
+    }
+
+    if (expedientes.status === 'fulfilled') {
+        const datos = expedientes.value
+        setText('directorioExpedientesCompletos', `${datos?.porcentaje ?? 0} %`)
+        setText(
+            'directorioExpedientesDetalle',
+            Number(datos?.total ?? 0) === 0
+                ? 'Sin documentos registrados'
+                : `${datos.pendientes} ${datos.pendientes === 1 ? 'expediente por' : 'expedientes por'} actualizar`
+        )
+    } else {
+        console.error('Error al cargar los expedientes:', expedientes.reason)
     }
 }
 
