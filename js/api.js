@@ -60,6 +60,13 @@ window.HORIZON_API = Object.freeze({
 
     logout: () => request('/logout', { method: 'POST' }),
 
+    // La cuenta se deduce de la cookie de sesión en el backend; el cuerpo solo
+    // lleva la contraseña actual y la nueva.
+    changePassword: ({ currentPassword, newPassword }) => request('/employee/change-password', {
+        method: 'POST',
+        body: { currentPassword, newPassword }
+    }),
+
     checkSession: () => request('/check-session'),
 
     getEmpleadosByDepartamento: () => request('/api/empleadosByDepartamento'),

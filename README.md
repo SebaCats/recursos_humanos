@@ -16,6 +16,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 | Directorio | Conectado a `GET /employee/getPage`, paginación, catálogos, filtros y detalle por id |
 | Formulario de alta | Conectado a `POST /employee/create` con catálogos dinámicos |
 | Formulario de login | Conectado al backend real |
+| Cambio de contraseña | Conectado a `POST /employee/change-password` desde el resumen y el directorio |
 
 ## Características
 
@@ -37,6 +38,11 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 - Envía las credenciales a `POST /login`.
 - El backend responde con una cookie de sesión `HttpOnly`; el frontend no manipula el token.
 - Redirige al panel y muestra el mensaje del backend si las credenciales fallan.
+
+**Cambio de contraseña** (modal en `index.html` y `directorio.html`):
+- El botón de la barra lateral abre un formulario con contraseña actual, nueva y confirmación.
+- `js/password.js` valida los campos (mínimo 8 caracteres y coincidencia) y envía `POST /employee/change-password` mediante `window.HORIZON_API`.
+- La cuenta se toma de la cookie de sesión en el backend; el formulario solo envía las contraseñas. Muestra el error del backend si la contraseña actual es incorrecta y un aviso cuando el cambio se aplica.
 
 **Validación de sesión**:
 - Controlada en las páginas del panel (`index.html` y `directorio.html`) mediante `js/auth.js`.
@@ -81,6 +87,7 @@ recursos_humanos/
 │   ├── api.js          # Cliente único: fetch con credenciales, JSON y errores 401
 │   ├── auth.js         # Valida la cookie de sesión antes de mostrar el panel y gestiona el logout
 │   ├── login.js        # Envía credenciales al backend e inicia la sesión
+│   ├── password.js     # Valida y envía el formulario de cambio de contraseña
 │   ├── directorio.js   # Carga la tabla y envía el formulario de alta
 │   ├── graficas.js     # Inicialización de Chart.js (solo en el resumen)
 │   └── resumen.js      # Consumo de los endpoints de datos y actualización de KPIs
@@ -89,7 +96,7 @@ recursos_humanos/
 └── README.md
 ```
 
-Las rutas de recursos y las redirecciones son relativas, por lo que el frontend funciona tanto en la raíz del dominio como en un subdirectorio. En esta copia las llamadas al API usan `window.HORIZON_API_BASE` (`js/config.js`): en local apuntan a `http://localhost:3000` y en Vercel son relativas, resueltas por `vercel.json`. Todas las peticiones pasan por `window.HORIZON_API` (`js/api.js`), así que no hace falta editar `js/auth.js`, `js/login.js`, `js/resumen.js` ni `js/directorio.js` al cambiar de entorno.
+Las rutas de recursos y las redirecciones son relativas, por lo que el frontend funciona tanto en la raíz del dominio como en un subdirectorio. En esta copia las llamadas al API usan `window.HORIZON_API_BASE` (`js/config.js`): en local apuntan a `http://localhost:3000` y en Vercel son relativas, resueltas por `vercel.json`. Todas las peticiones pasan por `window.HORIZON_API` (`js/api.js`), así que no hace falta editar `js/auth.js`, `js/login.js`, `js/password.js`, `js/resumen.js` ni `js/directorio.js` al cambiar de entorno.
 
 ---
 
@@ -152,6 +159,8 @@ GET /employee/getPage?page=1&limit=10&q=&department=&sede=&contract_type=
                                      -> { "employees": [...], "pagination": { "page": 1, "limit": 10, "total": 23, "totalPages": 3 } }
 GET /employee/getById/:id            -> { "employee": {...} }
 POST /employee/create                -> { "result": { "temporaryPassword": "..." } }
+POST /employee/change-password       -> { "message": "Contraseña actualizada" }
+                                        body: { "currentPassword": "...", "newPassword": "..." }
 ```
 
 Si alguna petición falla se registra en consola; las secciones afectadas muestran guiones o valores vacíos en lugar de datos inventados.
@@ -193,6 +202,7 @@ El frontend espera que el backend esté ejecutándose en `http://localhost:3000`
 | `GET` | `/employee/getPage` | Página del directorio con `{ "employees": [...], "pagination": { page, limit, total, totalPages } }`. Acepta `page`, `limit`, `q`, `department`, `sede` y `contract_type`. |
 | `GET` | `/employee/getById/:id` | `{ "employee": {...} }`. Alimenta el modal de detalle. |
 | `POST` | `/employee/create` | Alta de empleado y contrato. Si no se envía `password`, la respuesta incluye `result.temporaryPassword`. |
+| `POST` | `/employee/change-password` | Recibe `{ "currentPassword": "...", "newPassword": "..." }`. Verifica la contraseña actual de la sesión, guarda el hash de la nueva y responde `{ "message": "Contraseña actualizada" }`. `400` si la actual es incorrecta o la nueva no es válida. |
 
 Todas las rutas anteriores, salvo `/login` y `/logout`, requieren sesión válida. `vercel.json` las proxya al backend con una sola regla y les aplica `Cache-Control: no-store`.
 
