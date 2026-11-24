@@ -17,7 +17,7 @@
 <body class="d-flex flex-row bg-gray">
 
     <!-- Barra lateral -->
-    <aside class="d-flex flex-column vh-100 p-3 border-end bg-white shadow-r" style="min-width: 250px;">
+    <aside id="menuLateral" class="offcanvas-lg offcanvas-start d-flex flex-column vh-100 p-3 border-end bg-white shadow-r" style="min-width: 250px;" tabindex="-1">
         <!-- Sección usuario -->
         <section class="d-flex align-items-center gap-2 mb-4 pb-3 border-bottom">
             <img src="https://randomuser.me/api/portraits/thumb/men/75.jpg" class="rounded-circle" width="36"
@@ -49,6 +49,10 @@
         </div>
     </aside>
 
+    <button class="btn btn-outline-secondary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuLateral" aria-controls="menuLateral">
+        <i class="bi bi-list"></i>
+    </button>
+
     <!-- Área de contenido principal -->
     <div class="flex-grow-1 d-flex flex-column overflow-auto vh-100">
         <!-- Header  -->
@@ -56,8 +60,11 @@
             class="sticky-top z-3 d-flex align-items-center justify-content-between p-3 mx-4 mt-0 rounded border-bottom shadow-b bg-white">
             <h5 class="text-body-tertiary d-flex m-0">Horizon ><div class="text-black mx-1">Recursos humanos</div>
             </h5>
-            <input class="form-control me-2 search-icon bg-gray border-0" type="search"
+            <input class="form-control me-2 search-icon bg-gray border-0  d-none d-sm-block" type="search"
                 placeholder="Buscar en mi empresa..." style="width: 250px;" />
+            <button class="btn search-icon d-sm-none" type="button" aria-label="Buscar">
+                <i class="bi bi-search"></i>
+            </button>
         </header>
 
         <!-- Contenido principal (antes pages/directorio.ejs) -->
@@ -69,7 +76,7 @@
                         <h1>Directorio de Empleados</h1>
                         <p class="text-body-tertiary">El expediente de cada persona, conectado con el resto de tu ERP.</p>
                     </div>
-                    <a class="btn btn-primary text-nowrap" role="button" data-bs-toggle="modal"
+                    <a class="btn btn-primary text-nowrap flex-wrap gap-2" role="button" data-bs-toggle="modal"
                         data-bs-target="#formularioEstatico">+ Añadir empleado</a>
                 </div>
             </div>
@@ -116,7 +123,7 @@
             <div class="card py-3 my-3 shadow-b">
                 <div class="container-fluid ">
                     <!-- Mini NavBar Dash Board-->
-                    <ul class="d-flex gap-5 list-unstyled">
+                    <ul class="d-flex list-unstyled flex-wrap gap-3">
                         <li>
                             <a class="text-decoration-none text-reset" href="#">Todos los empleados -
                                 <span id="navTotalEmpleados">—</span></a>
@@ -130,11 +137,14 @@
                     </ul>
                     <hr>
                     <!-- Primera Linea de elementos Dash Board-->
-                    <ul class="d-flex gap-4 list-unstyled">
+                    <ul class="d-flex gap-4 list-unstyled flex-wrap gap-3">
                         <li>
-                            <input class="form-control bg-gray" type="search" id="buscarEmpleados"
+                            <input class="form-control bg-gray d-none d-sm-block" type="search" id="buscarEmpleados"
                                 placeholder="Nombre, ID o correo electrónico" aria-label="Buscar empleados"
                                 style="width: 350px; max-width: 100%;">
+                            <button class="btn search-icon d-sm-none" type="button" aria-label="Buscar">
+                                <i class="bi bi-search"></i>
+                            </button>
                         </li>
                         <li>
                             <div class="dropdown">
@@ -186,7 +196,7 @@
                         </li>
                     </ul>
                     <!-- Segunda Linea de elementos Dash Board-->
-                    <ul class="d-flex gap-4 list-unstyled align-items-center">
+                    <ul class="d-flex gap-4 list-unstyled align-items-center flex-wrap gap-3">
                         <li>
                             <div class="align-content-center" id="directorioEmpleadosCount">Cargando empleados...</div>
                         </li>
@@ -203,7 +213,7 @@
                         </li>
                     </ul>
                     <!-- Tabla -->
-                    <div class="container-fluid p-0">
+                    <div class="container-fluid p-0 table-responsive">
                         <table class="table table-hover">
                             <thead class="table-light">
                                 <tr>
@@ -331,7 +341,7 @@
                     </div>
                     <!-- TODO Footer de la DashBoard-->
                     <div class="container-fluid">
-                        <div class="d-flex justify-content-between align-items-center g-2">
+                        <div class="d-flex justify-content-between align-items-center g-2 flex-wrap gap-2">
                             <div id="directorioPaginadoText">Cargando empleados...</div>
 
                             <!-- Navegador de Paginas del DashBoard -->
