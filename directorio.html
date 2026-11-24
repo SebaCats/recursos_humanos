@@ -139,9 +139,12 @@
                     <!-- Primera Linea de elementos Dash Board-->
                     <ul class="d-flex gap-4 list-unstyled flex-wrap gap-3">
                         <li>
-                            <input class="form-control bg-gray" type="search" id="buscarEmpleados"
+                            <input class="form-control bg-gray d-none d-sm-block" type="search" id="buscarEmpleados"
                                 placeholder="Nombre, ID o correo electrónico" aria-label="Buscar empleados"
                                 style="width: 350px; max-width: 100%;">
+                            <button class="btn search-icon d-sm-none" type="button" aria-label="Buscar">
+                                <i class="bi bi-search"></i>
+                            </button>
                         </li>
                         <li>
                             <div class="dropdown">
