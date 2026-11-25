@@ -43,7 +43,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 **Directorio** (`directorio.html`):
 - Tarjetas de indicadores alimentadas por `/api/resumen`, `/api/evolucionContrataciones`, `/api/empleadosBySede`, `/api/contratosPorVencer` y `/api/expedientes`.
 - Buscador que filtra por nombre, correo o ID, más filtros funcionales de departamento, sede y contrato. Buscar o filtrar reinicia la paginación.
-- Tabla paginada (10 filas por página) cargada desde `GET /employee/getPage`; al pulsar un nombre se consulta `GET /employee/getById/:id`. Si el backend aún no tiene ese endpoint, se usa `GET /employee/getAll` y se pagina en el cliente.
+- Tabla paginada (10 filas por página) cargada desde `GET /employee/getPage`; al pulsar un nombre se consulta `GET /employee/getById/:id` y se abre su modal de detalle.
 - Modal "Añadir empleado" con sedes, departamentos, tipos de contrato y puestos cargados desde `GET /api/catalogos`. Envía `POST /employee/create` y muestra la contraseña temporal.
 - El botón “Exportar” descarga un CSV con `GET /api/exportar/empleados` y los filtros activos (búsqueda, departamento, sede y contrato); solo se muestra con nivel RRHH/ADMIN.
 - El buscador del encabezado consulta `GET /api/buscar` (empleados, decisiones, hitos y actividad) con debounce y muestra los resultados agrupados. Al elegir una persona se abre su modal de detalle en el directorio; si estás en el resumen, se abre el directorio con el nombre ya buscado.
@@ -70,7 +70,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 **Validación de sesión**:
 - Controlada en las páginas del panel (`index.html` y `directorio.html`) mediante `js/auth.js`.
 - Consulta `GET http://localhost:3000/check-session` enviando la cookie con `credentials: 'include'`.
-- Si la sesión no es válida, redirige a `login.html`. El contenido se oculta con `visibility` para no romper el layout `d-flex` del `body`.
+- El contenido se oculta con `visibility` para no romper el layout `d-flex` del `body`; solo un `401` redirige a `login.html`. Un `403` deja el panel visible y muestra “sin permisos” sin reintentar ni redirigir.
 
 **Cierre de sesión**:
 - El enlace "Cerrar sesión" (`data-logout`) envía `POST /logout`.
@@ -107,12 +107,13 @@ recursos_humanos/
 ├── css/
 │   └── styles.css      # Estilos y utilidades propias
 ├── js/
-│   ├── api.js          # Cliente único: fetch con credenciales, JSON y errores 401
+│   ├── api.js          # Cliente único: fetch con credenciales, JSON y errores 401/403
 │   ├── auth.js         # Valida la cookie de sesión antes de mostrar el panel y gestiona el logout
 │   ├── login.js        # Envía credenciales al backend e inicia la sesión
 │   ├── password.js     # Valida y envía el formulario de cambio de contraseña
 │   ├── preferencias.js # Lee y guarda preferencias, y aplica tema e idioma
-│   ├── directorio.js   # Carga la tabla y envía el formulario de alta
+│   ├── directorio.js   # Carga la tabla, ficha y formularios de alta/baja/contrato
+│   ├── busqueda.js     # Búsqueda global del encabezado
 │   ├── graficas.js     # Inicialización de Chart.js (solo en el resumen)
 │   └── resumen.js      # Consumo de los endpoints de datos y actualización de KPIs
 ├── static/
