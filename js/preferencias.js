@@ -15,6 +15,7 @@
     if (!formulario || !window.HORIZON_API) return
 
     let actual = null
+    const consultaSistema = window.matchMedia?.('(prefers-color-scheme: dark)')
 
     function campo(id) {
         return document.getElementById(id)
@@ -69,14 +70,26 @@
         for (const id of ['prefTema', 'prefIdioma', 'prefDensidad']) marcar(id, false)
     }
 
+    function aplicarTema(tema) {
+        // Bootstrap no resuelve `prefers-color-scheme` por sí solo: con
+        // SISTEMA se traduce el valor del sistema al atributo que sí entiende.
+        const oscuro = tema === 'SISTEMA'
+            ? Boolean(consultaSistema?.matches)
+            : tema === 'OSCURO'
+        document.documentElement.setAttribute('data-bs-theme', oscuro ? 'dark' : 'light')
+    }
+
+    consultaSistema?.addEventListener?.('change', () => {
+        if (actual?.tema === 'SISTEMA') aplicarTema('SISTEMA')
+    })
+
     function aplicar(preferencias) {
         const tema = TEMAS.includes(preferencias?.tema) ? preferencias.tema : 'CLARO'
         const idioma = IDIOMAS.includes(preferencias?.idioma) ? preferencias.idioma : 'ES'
         const densidad = DENSIDADES.includes(preferencias?.densidad) ? preferencias.densidad : 'COMODA'
         const notificaciones = preferencias?.notificaciones !== false
 
-        if (tema === 'SISTEMA') document.documentElement.removeAttribute('data-bs-theme')
-        else document.documentElement.setAttribute('data-bs-theme', tema === 'OSCURO' ? 'dark' : 'light')
+        aplicarTema(tema)
 
         document.body.classList.toggle('densidad-compacta', densidad === 'COMPACTA')
         document.documentElement.lang = idioma.toLowerCase()

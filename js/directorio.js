@@ -644,7 +644,7 @@ async function recargarTrasContrato(id) {
     const peticiones = await Promise.allSettled([
         cargarEmpleados(),
         cargarIndicadores(),
-        verDetalle(id)
+        verDetalle(id, { abrir: false })
     ])
 
     peticiones.forEach((peticion, indice) => {
@@ -1373,7 +1373,9 @@ async function cargarDocumentosEmpleado(idEmpleado) {
     }
 }
 
-async function verDetalle(id) {
+// `abrir: false` se usa al recargar la ficha tras una escritura: actualiza el
+// contenido sin volver a mostrar una modal que el usuario pudo cerrar.
+async function verDetalle(id, { abrir = true } = {}) {
     if (!id) return
 
     empleadoSeleccionado = String(id)
@@ -1392,7 +1394,7 @@ async function verDetalle(id) {
     if (expediente) expediente.hidden = true
     setText('estadoExpediente', '')
 
-    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+    if (abrir && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
         bootstrap.Modal.getOrCreateInstance(modalElemento).show()
     }
 
