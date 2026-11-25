@@ -219,5 +219,10 @@ window.HORIZON_API = Object.freeze({
 
     rechazarDecision: (id) => request(`/api/decisiones/${encodeURIComponent(id)}/rechazar`, {
         method: 'POST'
+    }),
+
+    crearHito: (hito) => request('/api/hitos', {
+        method: 'POST',
+        body: hito
     })
 })

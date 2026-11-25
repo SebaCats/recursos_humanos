@@ -11,7 +11,7 @@
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="css/styles.css">
     <script src="js/config.js?v=20261123"></script>
-    <script src="js/api.js?v=20261125"></script>
+    <script src="js/api.js?v=20261126"></script>
     <script src="js/auth.js?v=20261123"></script>
 </head>
 
@@ -238,11 +238,67 @@
 
             <div class="container-fluid p-0 my-3">
                 <article class="card shadow-b p-3 bg-primary-subtle border-0">
-                    <strong id="proximoHito" class="text-primary">Cargando próximo hito...</strong>
-                    <small id="proximoHitoDetalle" class="text-primary">Cargando...</small>
+                    <div class="d-flex justify-content-between align-items-center gap-3">
+                        <div>
+                            <strong id="proximoHito" class="text-primary">Cargando próximo hito...</strong>
+                            <small id="proximoHitoDetalle" class="text-primary d-block">Cargando...</small>
+                        </div>
+                        <button type="button" id="btnProgramarHito" class="btn btn-sm btn-outline-primary text-nowrap"
+                            data-bs-toggle="modal" data-bs-target="#modalProgramarHito" hidden>
+                            Programar hito
+                        </button>
+                    </div>
+                    <small id="estadoHito" class="text-primary d-block mt-1"></small>
                 </article>
             </div>
         </main>
+    </div>
+
+    <!-- Modal Programar Hito -->
+    <div class="modal fade" id="modalProgramarHito" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="tituloProgramarHito" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tituloProgramarHito">Programar hito</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form id="formProgramarHito" novalidate>
+                    <div class="modal-body">
+                        <div id="alertaProgramarHito" class="alert d-none" role="alert"></div>
+
+                        <div class="mb-3">
+                            <label for="hitoTitulo" class="form-label">Título</label>
+                            <input type="text" class="form-control" id="hitoTitulo" name="title" minlength="3"
+                                maxlength="200" required>
+                            <div class="invalid-feedback">El título debe tener al menos 3 caracteres.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="hitoDescripcion" class="form-label">Descripción (opcional)</label>
+                            <textarea class="form-control" id="hitoDescripcion" name="description" rows="3"
+                                maxlength="500"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="hitoFecha" class="form-label">Fecha</label>
+                            <input type="date" class="form-control" id="hitoFecha" name="due_date" required>
+                            <div class="invalid-feedback">La fecha debe ser hoy o posterior.</div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label for="hitoResponsable" class="form-label">Responsable (opcional)</label>
+                            <input type="text" class="form-control" id="hitoResponsable" name="owner" minlength="3"
+                                maxlength="100">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="botonGuardarHito">Guardar hito</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <!-- Modal Cambiar Contraseña -->
@@ -291,7 +347,7 @@
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/graficas.js?v=20261123"></script>
-    <script src="js/resumen.js?v=20261125"></script>
+    <script src="js/resumen.js?v=20261126"></script>
     <script src="js/password.js?v=20261123"></script>
 </body>
 

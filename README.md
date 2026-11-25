@@ -4,7 +4,7 @@
 
 Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS**, **JavaScript** y **Bootstrap 5**. Incluye un resumen ejecutivo con indicadores y gráficas, un directorio de empleados y autenticación mediante **cookie de sesión HttpOnly** emitida por el backend.
 
-> **Proyecto en desarrollo:** el frontend consume autenticación, catálogos, reportes, directorio (con paginación y filtros), detalle de empleado y alta, y permite resolver decisiones desde la bandeja del resumen. Quedan como elementos visuales el filtro de estado, "Exportar", "Columnas" y la sección de actividad.
+> **Proyecto en desarrollo:** el frontend consume autenticación, catálogos, reportes, directorio (con paginación y filtros), detalle de empleado y alta, y permite resolver decisiones y programar hitos desde el resumen. Quedan como elementos visuales el filtro de estado, "Exportar", "Columnas" y la sección de actividad.
 
 ## Estado actual
 
@@ -18,6 +18,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 | Formulario de login | Conectado al backend real |
 | Cambio de contraseña | Conectado a `POST /employee/change-password` desde el resumen y el directorio |
 | Bandeja de decisiones | Resolución conectada a `POST /api/decisiones/:id/aprobar|rechazar`, solo para RRHH/ADMIN |
+| Programación de hitos | Conectada a `POST /api/hitos`, solo para RRHH/ADMIN |
 
 ## Características
 
@@ -28,6 +29,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 - Distribución por departamento, sedes, roles y tipos de contrato desde `/api/*`.
 - Nómina por departamento construida con `GET /api/salarioByDepartamento`; el coste previsto usa `GET /api/nomina` y cae al salario vigente si no hay cierre.
 - Rotación, ausentismo, contratos por vencer, bandeja de decisiones, actividad reciente y próximo hito alimentados por `/api/rotacion`, `/api/ausentismo`, `/api/contratosPorVencer`, `/api/decisiones`, `/api/actividad` y `/api/hitos`. La bandeja permite aprobar o rechazar solicitudes con `POST /api/decisiones/:id/aprobar|rechazar`; las acciones aparecen solo si `GET /api/permisos` devuelve nivel RRHH o ADMIN. Tras resolver se recargan la bandeja y la actividad.
+- El botón “Programar hito” abre un formulario que envía `POST /api/hitos` (título, fecha, descripción y responsable opcionales) y recarga el próximo hito y la actividad. También queda oculto para quien no tenga nivel RRHH/ADMIN.
 
 **Directorio** (`directorio.html`):
 - Tarjetas de indicadores alimentadas por `/api/resumen`, `/api/evolucionContrataciones`, `/api/empleadosBySede`, `/api/contratosPorVencer` y `/api/expedientes`.

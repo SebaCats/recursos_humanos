@@ -9,8 +9,9 @@ const etiquetasSede = { NORTH: 'Norte', CENTER: 'Centro', SOUTH: 'Sur' }
 let periodoEvolucion = 'mes'
 let datosResumen = null
 let datosDecisiones = null
-let puedeResolverDecisiones = false
+let puedeGestionarRRHH = false
 let accionesDecisionesConfiguradas = false
+let formularioHitoConfigurado = false
 
 function setText(id, texto) {
     const elemento = document.getElementById(id)
@@ -379,7 +380,7 @@ async function recargarDecisiones() {
 
     if (peticiones[0].status === 'fulfilled') {
         datosDecisiones = peticiones[0].value
-        renderizarDecisiones(datosDecisiones, puedeResolverDecisiones)
+        renderizarDecisiones(datosDecisiones, puedeGestionarRRHH)
     } else {
         document.getElementById('decisionesBody')?.querySelectorAll('button[data-decision-id]')
             .forEach((elemento) => { elemento.disabled = false })
@@ -391,7 +392,7 @@ async function recargarDecisiones() {
 
 async function resolverDecisionDesdeBandeja(evento) {
     const boton = evento.target.closest('button[data-decision-id][data-accion]')
-    if (!boton || boton.disabled || !puedeResolverDecisiones) return
+    if (!boton || boton.disabled || !puedeGestionarRRHH) return
 
     const accion = boton.dataset.accion
     if (!['aprobar', 'rechazar'].includes(accion)) return
@@ -413,7 +414,7 @@ async function resolverDecisionDesdeBandeja(evento) {
         console.error('Error al resolver la decisión:', error)
 
         if (error.status === 403) {
-            puedeResolverDecisiones = false
+            puedeGestionarRRHH = false
             renderizarDecisiones(datosDecisiones, false)
             setText('decisionesDetalle', 'Sin permisos para resolver decisiones')
         } else if (error.status === 409) {
@@ -435,6 +436,151 @@ function configurarAccionesDecisiones() {
 
     cuerpo.addEventListener('click', resolverDecisionDesdeBandeja)
     accionesDecisionesConfiguradas = true
+}
+
+const CAMPOS_HITO = {
+    title: 'hitoTitulo',
+    description: 'hitoDescripcion',
+    due_date: 'hitoFecha',
+    owner: 'hitoResponsable'
+}
+
+function marcarCampoHito(ruta, mensaje) {
+    const id = CAMPOS_HITO[ruta]
+    const campo = id ? document.getElementById(id) : null
+    if (!campo) return
+
+    campo.classList.add('is-invalid')
+    campo.setAttribute('aria-invalid', String(Boolean(mensaje)))
+}
+
+function limpiarCamposHito() {
+    for (const id of Object.values(CAMPOS_HITO)) {
+        const campo = document.getElementById(id)
+        if (!campo) continue
+        campo.classList.remove('is-invalid')
+        campo.removeAttribute('aria-invalid')
+    }
+}
+
+function mostrarAlertaHito(mensaje, tipo) {
+    const alerta = document.getElementById('alertaProgramarHito')
+    if (!alerta) return
+    alerta.className = `alert alert-${tipo}`
+    alerta.textContent = mensaje
+    alerta.classList.remove('d-none')
+}
+
+function ocultarAlertaHito() {
+    const alerta = document.getElementById('alertaProgramarHito')
+    if (!alerta) return
+    alerta.className = 'alert d-none'
+    alerta.textContent = ''
+}
+
+function cerrarModalHito() {
+    const modal = document.getElementById('modalProgramarHito')
+    if (modal && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        bootstrap.Modal.getInstance(modal)?.hide()
+    }
+}
+
+// La fecha mínima se calcula en UTC para que coincida con la validación del
+// backend, que compara contra new Date().toISOString().slice(0, 10).
+function configurarHito() {
+    const boton = document.getElementById('btnProgramarHito')
+    if (boton) boton.hidden = !puedeGestionarRRHH
+
+    const fecha = document.getElementById('hitoFecha')
+    if (fecha && !fecha.min) fecha.min = new Date().toISOString().slice(0, 10)
+
+    const formulario = document.getElementById('formProgramarHito')
+    if (!formulario || formularioHitoConfigurado) return
+
+    formulario.addEventListener('submit', registrarHito)
+    formularioHitoConfigurado = true
+}
+
+async function recargarHito() {
+    const nombres = ['hitos', 'actividad']
+    const peticiones = await Promise.allSettled([
+        window.HORIZON_API.getHitos(),
+        window.HORIZON_API.getActividad()
+    ])
+
+    peticiones.forEach((peticion, indice) => {
+        if (peticion.status === 'rejected') {
+            console.error(`Error al recargar ${nombres[indice]}:`, peticion.reason)
+        }
+    })
+
+    if (peticiones[0].status === 'fulfilled') renderizarHito(peticiones[0].value)
+    if (peticiones[1].status === 'fulfilled') renderizarActividad(peticiones[1].value)
+}
+
+async function registrarHito(evento) {
+    evento.preventDefault()
+
+    const titulo = document.getElementById('hitoTitulo')?.value.trim() ?? ''
+    const descripcion = document.getElementById('hitoDescripcion')?.value.trim() ?? ''
+    const fecha = document.getElementById('hitoFecha')?.value.trim() ?? ''
+    const responsable = document.getElementById('hitoResponsable')?.value.trim() ?? ''
+    const hoy = new Date().toISOString().slice(0, 10)
+
+    limpiarCamposHito()
+    ocultarAlertaHito()
+
+    const errores = []
+    if (titulo.length < 3) {
+        marcarCampoHito('title', 'Título demasiado corto')
+        errores.push('El título debe tener al menos 3 caracteres')
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || fecha < hoy) {
+        marcarCampoHito('due_date', 'Fecha no válida')
+        errores.push('La fecha debe ser hoy o posterior')
+    }
+    if (errores.length) {
+        mostrarAlertaHito(errores.join(' '), 'danger')
+        return
+    }
+
+    const cuerpo = { title: titulo, due_date: fecha }
+    if (descripcion) cuerpo.description = descripcion
+    if (responsable) cuerpo.owner = responsable
+
+    const boton = document.getElementById('botonGuardarHito')
+    if (boton) boton.disabled = true
+    setText('estadoHito', 'Registrando hito...')
+
+    try {
+        const resultado = await window.HORIZON_API.crearHito(cuerpo)
+        setText('estadoHito', resultado?.message ?? 'Hito registrado')
+        evento.currentTarget.reset()
+        ocultarAlertaHito()
+        limpiarCamposHito()
+        cerrarModalHito()
+        await recargarHito()
+    } catch (error) {
+        console.error('Error al registrar el hito:', error)
+
+        if (error.status === 403) {
+            puedeGestionarRRHH = false
+            configurarHito()
+            cerrarModalHito()
+            setText('estadoHito', 'Sin permisos para programar hitos')
+            return
+        }
+
+        const detalles = Array.isArray(error.data?.errors) ? error.data.errors : []
+        for (const detalle of detalles) marcarCampoHito(detalle.path, detalle.message)
+        const mensaje = detalles.length
+            ? detalles.map((detalle) => `${detalle.path}: ${detalle.message}`).join(' ')
+            : error.message ?? 'No se pudo registrar el hito'
+        mostrarAlertaHito(mensaje, 'danger')
+        setText('estadoHito', 'No se pudo registrar el hito')
+    } finally {
+        if (boton) boton.disabled = false
+    }
 }
 
 function renderizarActividad(datos) {
@@ -513,9 +659,10 @@ async function cargarIndicadores(salarioActual) {
     renderizarAusentismo(valor(1))
 
     datosDecisiones = valor(3)
-    puedeResolverDecisiones = ['RRHH', 'ADMIN'].includes(peticiones[8].value?.nivel)
+    puedeGestionarRRHH = ['RRHH', 'ADMIN'].includes(peticiones[8].value?.nivel)
     configurarAccionesDecisiones()
-    renderizarDecisiones(datosDecisiones, puedeResolverDecisiones)
+    configurarHito()
+    renderizarDecisiones(datosDecisiones, puedeGestionarRRHH)
 
     renderizarActividad(valor(4))
     renderizarHito(peticiones[5].status === 'fulfilled' ? peticiones[5].value : undefined)
