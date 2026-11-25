@@ -522,13 +522,19 @@ function cerrarModal(id) {
     }
 }
 
+// Un 403 revoca todas las acciones privilegiadas, no solo la que falló: las
+// bandejas, la exportación, la importación y los documentos quedan inactivos.
 function sinPermisosContratos(mensaje = 'Sin permisos para gestionar contratos') {
     puedeRRHH = false
+    puedeAdmin = false
     configurarExportacion()
+    configurarImportacion()
     configurarAccionesContrato()
     document.getElementById('listaDocumentosEmpleado')?.querySelectorAll('select')
         .forEach((elemento) => { elemento.disabled = true })
     setText('estadoContratos', mensaje)
+    setText('estadoExpediente', 'Sin permisos para actualizar documentos')
+    setText('estadoImportacion', 'Sin permisos para importar empleados')
 }
 
 function actualizarDepartamentosContrato() {
@@ -713,6 +719,7 @@ async function registrarBaja(evento) {
 
         if (error.status === 403) {
             sinPermisosContratos('Sin permisos para registrar la baja')
+            mostrarAlerta('alertaRegistrarBaja', error.message, 'danger')
             return
         }
         if (error.status === 401) return
@@ -798,6 +805,7 @@ async function registrarContrato(evento) {
 
         if (error.status === 403) {
             sinPermisosContratos('Sin permisos para registrar el contrato')
+            mostrarAlerta('alertaNuevoContrato', error.message, 'danger')
             return
         }
         if (error.status === 401) return
@@ -880,8 +888,9 @@ async function cargarIndicadores() {
         console.error('Error al cargar los expedientes:', expedientes.reason)
     }
 
-    puedeRRHH = ['RRHH', 'ADMIN'].includes(permisos.value?.nivel)
-    puedeAdmin = permisos.value?.nivel === 'ADMIN'
+    const nivel = permisos.status === 'fulfilled' ? permisos.value?.nivel : null
+    puedeRRHH = ['RRHH', 'ADMIN'].includes(nivel)
+    puedeAdmin = nivel === 'ADMIN'
     configurarExportacion()
     configurarImportacion()
     configurarAccionesContrato()
@@ -1015,9 +1024,9 @@ async function cambiarEstadoDocumento(documento, selector, idEmpleado) {
     } catch (error) {
         console.error('Error al actualizar el documento:', error)
         if (error.status === 403) {
-            puedeRRHH = false
+            sinPermisosContratos('Sin permisos para actualizar documentos')
             await cargarDocumentosEmpleado(idEmpleado)
-            setText('estadoExpediente', 'Sin permisos para actualizar documentos')
+            return
         } else {
             setText('estadoExpediente', error.message ?? 'No se pudo actualizar el documento')
             selector.value = estadoAnterior

@@ -377,7 +377,11 @@ async function recargarNomina() {
         }
     })
 
-    if (peticiones[0].status === 'fulfilled') renderizarNominaDetalle(peticiones[0].value)
+    if (peticiones[0].status === 'fulfilled') {
+        renderizarNominaDetalle(peticiones[0].value)
+    } else {
+        setText('nominaDetalle', 'No se pudo recargar la nómina')
+    }
     if (peticiones[1].status === 'fulfilled') renderizarActividad(peticiones[1].value)
 }
 
@@ -415,6 +419,7 @@ async function cerrarPeriodoNomina(evento) {
             renderizarDecisiones(datosDecisiones, false)
             renderizarAusencias(datosAusencias, false)
             setText('nominaDetalle', 'Sin permisos para cerrar la nómina')
+            mostrarAlertaCerrarNomina(error.message, 'danger')
             return
         }
 
@@ -512,6 +517,7 @@ async function recargarDecisiones() {
         datosDecisiones = peticiones[0].value
         renderizarDecisiones(datosDecisiones, puedeGestionarRRHH)
     } else {
+        setText('decisionesDetalle', 'No se pudo recargar la bandeja de decisiones')
         document.getElementById('decisionesBody')?.querySelectorAll('button[data-decision-id]')
             .forEach((elemento) => { elemento.disabled = false })
     }
@@ -644,7 +650,11 @@ async function recargarHito() {
         }
     })
 
-    if (peticiones[0].status === 'fulfilled') renderizarHito(peticiones[0].value)
+    if (peticiones[0].status === 'fulfilled') {
+        renderizarHito(peticiones[0].value)
+    } else {
+        setText('proximoHito', 'No se pudo recargar el próximo hito')
+    }
     if (peticiones[1].status === 'fulfilled') renderizarActividad(peticiones[1].value)
 }
 
@@ -870,6 +880,7 @@ async function recargarAusencias() {
         datosAusencias = peticiones[0].value
         renderizarAusencias(datosAusencias, puedeGestionarRRHH)
     } else {
+        setText('ausenciasDetalle', 'No se pudo recargar la bandeja de ausencias')
         document.getElementById('ausenciasBody')?.querySelectorAll('button[data-ausencia-id]')
             .forEach((elemento) => { elemento.disabled = false })
     }
@@ -1107,7 +1118,8 @@ async function cargarIndicadores(salarioActual) {
     renderizarAusentismo(valor(1))
 
     datosDecisiones = valor(3)
-    puedeGestionarRRHH = ['RRHH', 'ADMIN'].includes(peticiones[8].value?.nivel)
+    const nivel = peticiones[8].status === 'fulfilled' ? peticiones[8].value?.nivel : null
+    puedeGestionarRRHH = ['RRHH', 'ADMIN'].includes(nivel)
     configurarAccionesDecisiones()
     configurarAccionesAusencias()
     configurarHito()

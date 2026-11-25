@@ -20,7 +20,9 @@ function mensajeDeError(data, status) {
     if (Array.isArray(data?.errors) && data.errors[0]?.message) {
         return data.errors[0].message
     }
-    return status === 401 ? 'Sesión inválida o expirada' : 'Error en la petición'
+    if (status === 401) return 'Sesión inválida o expirada'
+    if (status === 403) return 'No tienes permisos para realizar esta acción'
+    return 'Error en la petición'
 }
 
 const MESES_EVOLUCION = 12
