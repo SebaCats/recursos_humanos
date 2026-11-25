@@ -11,8 +11,8 @@
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="css/styles.css?v=20261204">
     <script src="js/config.js?v=20261123"></script>
-    <script src="js/api.js?v=20261205"></script>
-    <script src="js/auth.js?v=20261123"></script>
+    <script src="js/api.js?v=20261206"></script>
+    <script src="js/auth.js?v=20261206"></script>
 </head>
 
 <body class="d-flex flex-row bg-gray">
@@ -21,11 +21,12 @@
     <aside id="menuLateral" class="offcanvas-lg offcanvas-start d-flex flex-column vh-100 p-3 border-end bg-white shadow-r" style="min-width: 250px;" tabindex="-1">
         <!-- Sección usuario -->
         <section class="d-flex align-items-center gap-2 mb-4 pb-3 border-bottom">
-            <img src="https://randomuser.me/api/portraits/thumb/men/75.jpg" class="rounded-circle" width="36"
-                height="36" alt="Usuario">
+            <div id="avatarUsuario"
+                class="rounded-circle d-flex align-items-center justify-content-center bg-primary-subtle text-primary fw-semibold"
+                style="width: 36px; height: 36px;" aria-label="Iniciales del usuario">—</div>
             <div class="overflow-hidden">
-                <strong class="d-block text-truncate">Usuario Prueba</strong>
-                <small class="text-body-tertiary d-block text-truncate">Admin</small>
+                <strong id="nombreUsuario" class="d-block text-truncate">Cargando usuario...</strong>
+                <small id="rolUsuario" class="text-body-tertiary d-block text-truncate">Cargando rol...</small>
             </div>
         </section>
 
@@ -164,51 +165,11 @@
                         <article class="card shadow-b p-3 h-100">
                             <section>
                                 <h4>Distribución por departamento</h4>
-                                <small id="totalPlantillaText" class="text-body-tertiary">250 personas - plantilla
-                                    actual</small>
+                                <small id="totalPlantillaText" class="text-body-tertiary">—</small>
                             </section>
                             <!-- Barras de progreso: resumen.js las regenera con los datos de la API -->
-                            <div id="progressDiv" class="d-flex flex-column gap-1">
-                                <div class="d-flex justify-content-between">
-                                    <small>Operaciones</small>
-                                    <small>25 - 10%</small>
-                                </div>
-                                <div class="progress" role="progressbar" aria-label="Operaciones" aria-valuenow="10"
-                                    aria-valuemin="0" aria-valuemax="100">
-                                    <div class="progress-bar" style="width: 10%"></div>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <small>Tecnología</small>
-                                    <small>75 - 30%</small>
-                                </div>
-                                <div class="progress" role="progressbar" aria-label="Tecnología" aria-valuenow="30"
-                                    aria-valuemin="0" aria-valuemax="100">
-                                    <div class="progress-bar" style="width: 30%"></div>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <small>Comercial</small>
-                                    <small>50 - 20%</small>
-                                </div>
-                                <div class="progress" role="progressbar" aria-label="Comercial" aria-valuenow="20"
-                                    aria-valuemin="0" aria-valuemax="100">
-                                    <div class="progress-bar" style="width: 20%"></div>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <small>Finanzas</small>
-                                    <small>80 - 32%</small>
-                                </div>
-                                <div class="progress" role="progressbar" aria-label="Finanzas" aria-valuenow="32"
-                                    aria-valuemin="0" aria-valuemax="100">
-                                    <div class="progress-bar" style="width: 32%"></div>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <small>Personas</small>
-                                    <small>20 - 8%</small>
-                                </div>
-                                <div class="progress" role="progressbar" aria-label="Personas" aria-valuenow="8"
-                                    aria-valuemin="0" aria-valuemax="100">
-                                    <div class="progress-bar" style="width: 8%"></div>
-                                </div>
+                            <div id="progressDiv" class="d-flex flex-column gap-1 small text-body-tertiary">
+                                Cargando distribución...
                             </div>
                             <div id="nominaPorDepartamento" class="mt-3 small text-body-tertiary"></div>
                             <div id="distribucionDetalle" class="mt-1 small text-body-tertiary"></div>
@@ -549,10 +510,10 @@
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/graficas.js?v=20261123"></script>
-    <script src="js/resumen.js?v=20261204"></script>
+    <script src="js/resumen.js?v=20261206"></script>
     <script src="js/password.js?v=20261123"></script>
     <script src="js/preferencias.js?v=20261204"></script>
-    <script src="js/busqueda.js?v=20261128"></script>
+    <script src="js/busqueda.js?v=20261206"></script>
 </body>
 
 </html>

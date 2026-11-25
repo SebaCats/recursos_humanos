@@ -1,7 +1,37 @@
+const ETIQUETAS_NIVEL = {
+    GUEST: 'Empleado',
+    RRHH: 'RRHH',
+    ADMIN: 'Administrador'
+}
+
+function textoElemento(id, texto) {
+    const elemento = document.getElementById(id)
+    if (elemento) elemento.textContent = texto
+}
+
+function iniciales(usuario) {
+    const nombre = [usuario?.name, usuario?.lastName ?? usuario?.last_name]
+        .filter(Boolean).join(' ').trim()
+    if (!nombre) return '—'
+    return nombre.split(/\s+/).slice(0, 2).map((parte) => parte.charAt(0).toUpperCase()).join('')
+}
+
 async function verificarSesion() {
     try {
         const data = await window.HORIZON_API.checkSession()
-        console.log('Usuario autenticado:', data.user)
+        const usuario = data?.user ?? {}
+        textoElemento('nombreUsuario',
+            [usuario.name, usuario.lastName ?? usuario.last_name].filter(Boolean).join(' ') || usuario.email || 'Usuario')
+        textoElemento('avatarUsuario', iniciales(usuario))
+
+        try {
+            const permisos = await window.HORIZON_API.getPermisos()
+            textoElemento('rolUsuario', ETIQUETAS_NIVEL[permisos?.nivel] ?? permisos?.nivel ?? 'Sin rol asignado')
+        } catch (error) {
+            console.error('Error al cargar el rol:', error)
+            textoElemento('rolUsuario', 'Rol no disponible')
+        }
+
         document.body.style.visibility = 'visible'
     } catch (error) {
         console.error('Error validando la sesión:', error)
