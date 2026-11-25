@@ -11,8 +11,9 @@ let totalEmpleados = 0
 let totalPaginas = 1
 let temporizadorBusqueda
 let solicitudActual = 0
-let puedeExportar = false
+let puedeRRHH = false
 let exportacionConfigurada = false
+let solicitudExpediente = 0
 
 function setText(id, texto) {
     const elemento = document.getElementById(id)
@@ -34,6 +35,18 @@ function identidad(empleado) {
 
 function etiquetaSede(nombre) {
     return etiquetasSede[nombre] ?? nombre ?? ''
+}
+
+function fechaCorta(fecha) {
+    if (typeof fecha !== 'string' || !fecha) return '—'
+    const [anio, mes, dia] = fecha.slice(0, 10).split('-').map(Number)
+    if (!anio || !mes || !dia) return fecha
+    const texto = new Intl.DateTimeFormat('es-CO', {
+        day: 'numeric',
+        month: 'short',
+        timeZone: 'UTC'
+    }).format(new Date(Date.UTC(anio, mes - 1, dia)))
+    return texto.charAt(0).toUpperCase() + texto.slice(1)
 }
 
 function celda(valor) {
@@ -429,7 +442,7 @@ async function descargarEmpleados() {
     } catch (error) {
         console.error('Error al exportar los empleados:', error)
         if (error.status === 403) {
-            puedeExportar = false
+            puedeRRHH = false
             if (boton) boton.hidden = true
             setText('estadoExportacion', 'Sin permisos para exportar')
         } else {
@@ -444,7 +457,7 @@ function configurarExportacion() {
     const boton = document.getElementById('btnExportar')
     if (!boton) return
 
-    boton.hidden = !puedeExportar
+    boton.hidden = !puedeRRHH
     if (exportacionConfigurada) return
 
     boton.addEventListener('click', descargarEmpleados)
@@ -521,7 +534,7 @@ async function cargarIndicadores() {
         console.error('Error al cargar los expedientes:', expedientes.reason)
     }
 
-    puedeExportar = ['RRHH', 'ADMIN'].includes(permisos.value?.nivel)
+    puedeRRHH = ['RRHH', 'ADMIN'].includes(permisos.value?.nivel)
     configurarExportacion()
 }
 
@@ -556,6 +569,136 @@ function crearDetalle(empleado) {
     return lista
 }
 
+const ETIQUETAS_DOCUMENTO = {
+    IDENTIFICACION: 'Identificación',
+    CONTRATO: 'Contrato',
+    HOJA_DE_VIDA: 'Hoja de vida',
+    CERTIFICADO: 'Certificado',
+    OTRO: 'Otro'
+}
+const ESTADOS_DOCUMENTO = ['PENDIENTE', 'ACTUALIZADO', 'VENCIDO']
+
+function claseEstadoDocumento(estado) {
+    if (estado === 'ACTUALIZADO') return 'text-bg-success'
+    if (estado === 'VENCIDO') return 'text-bg-danger'
+    return 'text-bg-warning'
+}
+
+function actualizarKpiExpedientes() {
+    return window.HORIZON_API.getExpedientes().then((datos) => {
+        setText('directorioExpedientesCompletos', `${datos?.porcentaje ?? 0} %`)
+        setText(
+            'directorioExpedientesDetalle',
+            Number(datos?.total ?? 0) === 0
+                ? 'Sin documentos registrados'
+                : `${datos.pendientes} ${datos.pendientes === 1 ? 'expediente por' : 'expedientes por'} actualizar`
+        )
+    }).catch((error) => {
+        console.error('Error al actualizar el indicador de expedientes:', error)
+    })
+}
+
+function renderizarDocumentosEmpleado(documentos, idEmpleado) {
+    const lista = document.getElementById('listaDocumentosEmpleado')
+    if (!lista) return
+
+    const propios = documentos.filter(
+        (documento) => String(documento.id_employee) === String(idEmpleado)
+    )
+
+    if (propios.length === 0) {
+        lista.textContent = 'Sin documentos registrados para este empleado'
+        return
+    }
+
+    const fragmento = document.createDocumentFragment()
+    for (const documento of propios) {
+        const fila = document.createElement('div')
+        fila.className = 'd-flex justify-content-between align-items-center gap-2 py-1 border-bottom'
+
+        const informacion = document.createElement('div')
+        const titulo = document.createElement('div')
+        titulo.className = 'small fw-semibold'
+        titulo.textContent = ETIQUETAS_DOCUMENTO[documento.document_type] ?? documento.document_type
+        const estado = document.createElement('span')
+        estado.className = `badge ${claseEstadoDocumento(documento.status)}`
+        estado.textContent = documento.status
+        const fecha = document.createElement('small')
+        fecha.className = 'text-body-tertiary d-block'
+        fecha.textContent = documento.updated_at
+            ? `Actualizado: ${fechaCorta(documento.updated_at)}`
+            : 'Sin fecha de actualización'
+        informacion.append(titulo, estado, fecha)
+
+        const selector = document.createElement('select')
+        selector.className = 'form-select form-select-sm w-auto'
+        selector.setAttribute('aria-label', `Estado de ${titulo.textContent}`)
+        selector.disabled = !puedeRRHH
+
+        for (const valor of ESTADOS_DOCUMENTO) {
+            const opcion = document.createElement('option')
+            opcion.value = valor
+            opcion.textContent = valor
+            opcion.selected = valor === documento.status
+            selector.append(opcion)
+        }
+        selector.addEventListener('change', () => cambiarEstadoDocumento(documento, selector, idEmpleado))
+
+        fila.append(informacion, selector)
+        fragmento.append(fila)
+    }
+
+    lista.replaceChildren(fragmento)
+}
+
+async function cambiarEstadoDocumento(documento, selector, idEmpleado) {
+    const estadoNuevo = selector.value
+    const estadoAnterior = documento.status
+    selector.disabled = true
+    setText('estadoExpediente', 'Actualizando documento...')
+
+    try {
+        const resultado = await window.HORIZON_API.actualizarDocumento(documento.id, estadoNuevo)
+        documento.status = estadoNuevo
+        documento.updated_at = resultado?.documento?.updated_at ?? new Date().toISOString()
+        await Promise.all([cargarDocumentosEmpleado(idEmpleado), actualizarKpiExpedientes()])
+        setText('estadoExpediente', resultado?.message ?? 'Documento actualizado')
+    } catch (error) {
+        console.error('Error al actualizar el documento:', error)
+        if (error.status === 403) {
+            puedeRRHH = false
+            await cargarDocumentosEmpleado(idEmpleado)
+            setText('estadoExpediente', 'Sin permisos para actualizar documentos')
+        } else {
+            setText('estadoExpediente', error.message ?? 'No se pudo actualizar el documento')
+            selector.value = estadoAnterior
+            selector.disabled = false
+        }
+    }
+}
+
+async function cargarDocumentosEmpleado(idEmpleado) {
+    const seccion = document.getElementById('detalleExpedienteContenido')
+    const lista = document.getElementById('listaDocumentosEmpleado')
+    if (!seccion || !lista) return
+
+    const solicitud = ++solicitudExpediente
+    seccion.hidden = false
+    setText('estadoExpediente', '')
+    lista.textContent = 'Cargando documentos...'
+
+    try {
+        const datos = await window.HORIZON_API.getExpedientesDetalle()
+        if (solicitud !== solicitudExpediente) return
+        renderizarDocumentosEmpleado(Array.isArray(datos) ? datos : [], idEmpleado)
+    } catch (error) {
+        if (solicitud !== solicitudExpediente) return
+        console.error('Error al cargar el expediente:', error)
+        lista.textContent = 'No se pudo cargar el expediente'
+        setText('estadoExpediente', 'No se pudo cargar el expediente')
+    }
+}
+
 async function verDetalle(id) {
     if (!id) return
 
@@ -567,6 +710,10 @@ async function verDetalle(id) {
     contenido.textContent = 'Cargando...'
     if (titulo) titulo.textContent = 'Empleado'
 
+    const expediente = document.getElementById('detalleExpedienteContenido')
+    if (expediente) expediente.hidden = true
+    setText('estadoExpediente', '')
+
     if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
         bootstrap.Modal.getOrCreateInstance(modalElemento).show()
     }
@@ -576,11 +723,18 @@ async function verDetalle(id) {
         const empleado = data?.employee ?? {}
         if (titulo) titulo.textContent = nombreCompleto(empleado) || identidad(empleado) || 'Empleado'
         contenido.replaceChildren(crearDetalle(empleado))
+        await cargarDocumentosEmpleado(id)
     } catch (error) {
         console.error('Error al cargar el detalle del empleado:', error)
         contenido.textContent = error.message
+        const expediente = document.getElementById('detalleExpedienteContenido')
+        if (expediente) expediente.hidden = true
     }
 }
+
+// La búsqueda global del encabezado usa esta función para abrir la modal en
+// lugar de recargar la página con el empleado como filtro.
+window.verDetalle = verDetalle
 
 function mostrarRespuesta(mensaje, tipo = 'info') {
     const alerta = document.getElementById('respuestaRegistro')

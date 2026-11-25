@@ -232,13 +232,20 @@ window.HORIZON_API = Object.freeze({
         body: hito
     }),
 
-    // El CSV se descarga en el cliente. Los filtros activos del directorio se
-    // envían al backend para exportar exactamente lo que se está viendo.
+    getExpedientesDetalle: () => request('/api/expedientes/detalle'),
+
+    actualizarDocumento: (id, status) => request(`/api/documentos/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: { status }
+    }),
+
     buscar: (q, limit = 5, signal) => {
         const parametros = new URLSearchParams({ q, limit: String(limit) })
         return request(`/api/buscar?${parametros}`, { signal })
     },
 
+    // El CSV se descarga en el cliente. Los filtros activos del directorio se
+    // envían al backend para exportar exactamente lo que se está viendo.
     exportarEmpleados: async (filtros = {}) => {
         const parametros = new URLSearchParams()
         for (const [clave, valor] of Object.entries(filtros)) {
