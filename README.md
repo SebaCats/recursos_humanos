@@ -6,7 +6,7 @@
 
 Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS**, **JavaScript** y **Bootstrap 5**. Incluye un resumen ejecutivo con indicadores y gráficas, un directorio de empleados y autenticación mediante **cookie de sesión HttpOnly** emitida por el backend.
 
-> **Proyecto en desarrollo:** el frontend consume autenticación, catálogos, reportes, directorio (con paginación y filtros), detalle de empleado y alta, y permite resolver decisiones y programar hitos desde el resumen, exportar el directorio a CSV, buscar en toda la empresa desde el encabezado, gestionar el expediente documental desde la modal del empleado, completar el ciclo de ausencias (solicitar, aprobar y rechazar), cerrar la nómina y registrar bajas o nuevos contratos desde la ficha del empleado, e importar empleados desde CSV. Quedan como elementos visuales el filtro de estado, "Columnas" y la sección de actividad.
+> **Proyecto en desarrollo:** el frontend consume autenticación, catálogos, reportes, directorio (con paginación y filtros), detalle de empleado y alta, y permite resolver decisiones y programar hitos desde el resumen, exportar el directorio a CSV, buscar en toda la empresa desde el encabezado, gestionar el expediente documental desde la modal del empleado, completar el ciclo de ausencias (solicitar, aprobar y rechazar), cerrar la nómina y registrar bajas o nuevos contratos desde la ficha del empleado, e importar empleados desde CSV, y configurar preferencias personales. Quedan como elementos visuales el filtro de estado, "Columnas" y la sección de actividad.
 
 ## Estado actual
 
@@ -26,6 +26,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 | Búsqueda global | Conectada a `GET /api/buscar` en el encabezado de ambas páginas |
 | Expediente documental | Visible en la modal del empleado; estados editables con `PATCH /api/documentos/:id` solo para RRHH/ADMIN |
 | Ciclo de ausencias | Solicitud con `POST /api/ausencias`; bandeja con `GET /api/ausencias` y resolución con `POST /api/ausencias/:id/aprobar|rechazar` solo para RRHH/ADMIN |
+| Preferencias | Lectura con `GET /api/preferencias` y guardado parcial con `PUT /api/preferencias`, disponible para cualquier rol |
 
 ## Características
 
@@ -55,6 +56,11 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 - Envía las credenciales a `POST /login`.
 - El backend responde con una cookie de sesión `HttpOnly`; el frontend no manipula el token.
 - Redirige al panel y muestra el mensaje del backend si las credenciales fallan.
+
+**Preferencias** (modal en `index.html` y `directorio.html`):
+- `js/preferencias.js` lee `GET /api/preferencias` al cargar la página y cada vez que se abre la modal.
+- Tema (`CLARO`, `OSCURO`, `SISTEMA`), idioma (`ES`, `EN`), notificaciones y densidad (`COMODA`, `COMPACTA`). El tema aplica `data-bs-theme`, el idioma actualiza `lang` y la densidad añade una clase con estilos en `css/styles.css`; las etiquetas del panel siguen en español.
+- Solo se envían los campos modificados con `PUT /api/preferencias`. Tras guardar se vuelve a consultar `GET /api/preferencias` para mostrar el estado persistido, y se muestran los `errors[].path` si el backend rechaza los valores.
 
 **Cambio de contraseña** (modal en `index.html` y `directorio.html`):
 - El botón de la barra lateral abre un formulario con contraseña actual, nueva y confirmación.
@@ -105,6 +111,7 @@ recursos_humanos/
 │   ├── auth.js         # Valida la cookie de sesión antes de mostrar el panel y gestiona el logout
 │   ├── login.js        # Envía credenciales al backend e inicia la sesión
 │   ├── password.js     # Valida y envía el formulario de cambio de contraseña
+│   ├── preferencias.js # Lee y guarda preferencias, y aplica tema e idioma
 │   ├── directorio.js   # Carga la tabla y envía el formulario de alta
 │   ├── graficas.js     # Inicialización de Chart.js (solo en el resumen)
 │   └── resumen.js      # Consumo de los endpoints de datos y actualización de KPIs
@@ -113,7 +120,7 @@ recursos_humanos/
 └── README.md
 ```
 
-Las rutas de recursos y las redirecciones son relativas, por lo que el frontend funciona tanto en la raíz del dominio como en un subdirectorio. En esta copia las llamadas al API usan `window.HORIZON_API_BASE` (`js/config.js`): en local apuntan a `http://localhost:3000` y en Vercel son relativas, resueltas por `vercel.json`. Todas las peticiones pasan por `window.HORIZON_API` (`js/api.js`), así que no hace falta editar `js/auth.js`, `js/login.js`, `js/password.js`, `js/resumen.js` ni `js/directorio.js` al cambiar de entorno.
+Las rutas de recursos y las redirecciones son relativas, por lo que el frontend funciona tanto en la raíz del dominio como en un subdirectorio. En esta copia las llamadas al API usan `window.HORIZON_API_BASE` (`js/config.js`): en local apuntan a `http://localhost:3000` y en Vercel son relativas, resueltas por `vercel.json`. Todas las peticiones pasan por `window.HORIZON_API` (`js/api.js`), así que no hace falta editar `js/auth.js`, `js/login.js`, `js/password.js`, `js/preferencias.js`, `js/resumen.js` ni `js/directorio.js` al cambiar de entorno.
 
 ---
 
@@ -211,6 +218,7 @@ Si alguna petición falla se registra en consola; las secciones afectadas muestr
 | Detalle de empleado | `detalleEmpleado` | `js/directorio.js` |
 | Baja y nuevo contrato | `detalleContratosContenido`, `btnRegistrarBaja`, `btnNuevoContrato`, `modalRegistrarBaja`, `modalNuevoContrato` | `js/directorio.js` |
 | Importación CSV | `grupoImportar`, `formFile`, `modalImportarEmpleados`, `btnConfirmarImportacion`, `resultadosImportacion` | `js/directorio.js` |
+| Preferencias | `modalPreferencias`, `formPreferencias`, `prefTema`, `prefIdioma`, `prefNotificaciones`, `prefDensidad`, `estadoNotificaciones` | `js/preferencias.js` |
 
 ---
 
@@ -258,7 +266,7 @@ Al ser un sitio estático, se puede publicar directamente:
 
 ## Limitaciones conocidas
 
-- **Datos:** el resumen, la gráfica de altas, el directorio, los catálogos, el alta, las tarjetas de rotación/ausentismo, la bandeja de decisiones, las ausencias, el cierre de nómina, los hitos, la actividad reciente, la gestión de bajas y contratos y la importación CSV usan datos reales. La rotación se calcula con los datos disponibles.
+- **Datos:** el resumen, la gráfica de altas, el directorio, los catálogos, el alta, las tarjetas de rotación/ausentismo, la bandeja de decisiones, las ausencias, el cierre de nómina, los hitos, la actividad reciente, la gestión de bajas y contratos, la importación CSV y las preferencias usan datos reales. La rotación se calcula con los datos disponibles.
 - **Directorio:** la paginación, los filtros de departamento, sede y contrato, y la exportación CSV funcionan; el filtro de estado y "Columnas" siguen siendo elementos visuales.
 - **Contratos:** la BD no tiene fecha de vencimiento, por lo que la tarjeta "Contratos próximos a vencer" no se calcula desde la API.
 - **API:** requiere que el backend esté disponible en `http://localhost:3000` (o la URL configurada) con CORS y credenciales habilitados.

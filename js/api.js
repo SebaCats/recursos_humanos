@@ -159,6 +159,13 @@ window.HORIZON_API = Object.freeze({
         body: { currentPassword, newPassword }
     }),
 
+    getPreferencias: () => request('/api/preferencias'),
+
+    guardarPreferencias: (preferencias) => request('/api/preferencias', {
+        method: 'PUT',
+        body: preferencias
+    }),
+
     checkSession: () => request('/check-session'),
 
     getEmpleadosByDepartamento: () => request('/api/empleadosByDepartamento'),

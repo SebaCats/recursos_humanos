@@ -32,3 +32,18 @@
   .resultados-busqueda[hidden] {
     display: none;
   }
+
+  /* Preferencia de densidad: la aplica js/preferencias.js desde el backend. */
+  body.densidad-compacta .table > :not(caption) > * > * {
+    padding: 0.25rem 0.5rem;
+  }
+
+  body.densidad-compacta .card-body,
+  body.densidad-compacta .modal-body {
+    padding: 0.75rem;
+  }
+
+  body.densidad-compacta .modal-header,
+  body.densidad-compacta .modal-footer {
+    padding: 0.5rem 0.75rem;
+  }
