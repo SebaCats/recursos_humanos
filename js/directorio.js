@@ -13,6 +13,9 @@ let temporizadorBusqueda
 let solicitudActual = 0
 let puedeRRHH = false
 let exportacionConfigurada = false
+let accionesContratoConfiguradas = false
+let empleadoSeleccionado = null
+let empleadoSeleccionadoNombre = ''
 let solicitudExpediente = 0
 
 function setText(id, texto) {
@@ -464,6 +467,345 @@ function configurarExportacion() {
     exportacionConfigurada = true
 }
 
+const CAMPOS_BAJA = {
+    id_employee: 'bajaEmpleado',
+    termination_date: 'bajaFecha',
+    reason: 'bajaMotivo',
+    note: 'bajaNota'
+}
+
+const CAMPOS_CONTRATO = {
+    id_employee: 'contratoEmpleado',
+    position: 'contratoPuesto',
+    sede: 'contratoSede',
+    department: 'contratoDepartamento',
+    contract_type: 'contratoTipo',
+    salary: 'contratoSalario',
+    end_date: 'contratoFin'
+}
+
+function marcarCampo(id, mensaje) {
+    const campo = document.getElementById(id)
+    if (!campo) return
+    if (mensaje) campo.classList.add('is-invalid')
+    else campo.classList.remove('is-invalid')
+    campo.setAttribute('aria-invalid', String(Boolean(mensaje)))
+}
+
+function limpiarCampos(ids) {
+    for (const id of ids) marcarCampo(id, '')
+}
+
+function mostrarAlerta(id, mensaje, tipo) {
+    const alerta = document.getElementById(id)
+    if (!alerta) return
+    alerta.className = `alert alert-${tipo}`
+    alerta.textContent = mensaje
+    alerta.classList.remove('d-none')
+}
+
+function ocultarAlerta(id) {
+    const alerta = document.getElementById(id)
+    if (!alerta) return
+    alerta.className = 'alert d-none'
+    alerta.textContent = ''
+}
+
+function cerrarModal(id) {
+    const modal = document.getElementById(id)
+    if (modal && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        bootstrap.Modal.getInstance(modal)?.hide()
+    }
+}
+
+function sinPermisosContratos(mensaje = 'Sin permisos para gestionar contratos') {
+    puedeRRHH = false
+    configurarExportacion()
+    configurarAccionesContrato()
+    document.getElementById('listaDocumentosEmpleado')?.querySelectorAll('select')
+        .forEach((elemento) => { elemento.disabled = true })
+    setText('estadoContratos', mensaje)
+}
+
+function actualizarDepartamentosContrato() {
+    const sede = document.getElementById('contratoSede')?.value ?? ''
+    const departamentos = catalogos.departments.filter(
+        (departamento) => !sede || departamento.sede === sede
+    )
+
+    poblarSelect(
+        document.getElementById('contratoDepartamento'),
+        departamentos,
+        (departamento) => `${departamento.name} · ${etiquetaSede(departamento.sede)}`,
+        (departamento) => departamento.name,
+        sede ? 'Seleccionar...' : 'Seleccionar sede primero...'
+    )
+}
+
+function prepararBaja() {
+    if (!puedeRRHH || !empleadoSeleccionado) return
+
+    document.getElementById('formRegistrarBaja')?.reset()
+    limpiarCampos(Object.values(CAMPOS_BAJA))
+    ocultarAlerta('alertaRegistrarBaja')
+
+    const hoy = new Date().toISOString().slice(0, 10)
+    const fecha = document.getElementById('bajaFecha')
+    if (fecha) {
+        fecha.max = hoy
+        fecha.value = hoy
+    }
+    const campoId = document.getElementById('bajaEmpleado')
+    if (campoId) campoId.value = String(empleadoSeleccionado)
+    setText('bajaEmpleadoNombre', empleadoSeleccionadoNombre || String(empleadoSeleccionado))
+    setText('estadoContratos', '')
+}
+
+function prepararContrato() {
+    if (!puedeRRHH || !empleadoSeleccionado) return
+
+    document.getElementById('formNuevoContrato')?.reset()
+    limpiarCampos(Object.values(CAMPOS_CONTRATO))
+    ocultarAlerta('alertaNuevoContrato')
+
+    const campoId = document.getElementById('contratoEmpleado')
+    if (campoId) campoId.value = String(empleadoSeleccionado)
+    setText('contratoEmpleadoNombre', empleadoSeleccionadoNombre || String(empleadoSeleccionado))
+
+    const hoy = new Date().toISOString().slice(0, 10)
+    const fin = document.getElementById('contratoFin')
+    if (fin) fin.min = hoy
+
+    poblarSelect(
+        document.getElementById('contratoSede'),
+        catalogos.sedes,
+        (sede) => etiquetaSede(sede.name),
+        (sede) => sede.name,
+        'Seleccionar...'
+    )
+    poblarSelect(
+        document.getElementById('contratoTipo'),
+        catalogos.contractTypes,
+        (tipo) => tipo.name,
+        (tipo) => tipo.name,
+        'Seleccionar...'
+    )
+    actualizarDepartamentosContrato()
+    setText('estadoContratos', '')
+}
+
+function configurarAccionesContrato() {
+    const seccion = document.getElementById('detalleContratosContenido')
+    if (seccion) seccion.hidden = !puedeRRHH || !empleadoSeleccionado
+
+    const botonBaja = document.getElementById('btnRegistrarBaja')
+    if (botonBaja && botonBaja.dataset.configurado !== 'true') {
+        botonBaja.addEventListener('click', prepararBaja)
+        botonBaja.dataset.configurado = 'true'
+    }
+    const botonContrato = document.getElementById('btnNuevoContrato')
+    if (botonContrato && botonContrato.dataset.configurado !== 'true') {
+        botonContrato.addEventListener('click', prepararContrato)
+        botonContrato.dataset.configurado = 'true'
+    }
+
+    const formBaja = document.getElementById('formRegistrarBaja')
+    if (formBaja && formBaja.dataset.configurado !== 'true') {
+        formBaja.addEventListener('submit', registrarBaja)
+        formBaja.dataset.configurado = 'true'
+    }
+    const formContrato = document.getElementById('formNuevoContrato')
+    if (formContrato && formContrato.dataset.configurado !== 'true') {
+        formContrato.addEventListener('submit', registrarContrato)
+        formContrato.dataset.configurado = 'true'
+    }
+
+    const sede = document.getElementById('contratoSede')
+    if (sede && sede.dataset.configurado !== 'true') {
+        sede.addEventListener('change', actualizarDepartamentosContrato)
+        sede.dataset.configurado = 'true'
+    }
+}
+
+// Las dos escrituras afectan al directorio, a los KPIs y a la ficha abierta.
+// No hay caché que invalidar: se vuelven a pedir las mismas rutas de siempre.
+async function recargarTrasContrato(id) {
+    const nombres = ['empleados', 'indicadores', 'detalle']
+    const peticiones = await Promise.allSettled([
+        cargarEmpleados(),
+        cargarIndicadores(),
+        verDetalle(id)
+    ])
+
+    peticiones.forEach((peticion, indice) => {
+        if (peticion.status === 'rejected') {
+            console.error(`Error al recargar ${nombres[indice]}:`, peticion.reason)
+        }
+    })
+}
+
+function erroresDeValidacion(error, campos, mensajeGenerico) {
+    const detalles = Array.isArray(error?.data?.errors) ? error.data.errors : []
+    for (const detalle of detalles) {
+        const id = campos[detalle.path]
+        if (id) marcarCampo(id, detalle.message)
+    }
+    if (!detalles.length) return error?.message ?? mensajeGenerico
+    return detalles.map((detalle) => `${detalle.path}: ${detalle.message}`).join(' ')
+}
+
+async function registrarBaja(evento) {
+    evento.preventDefault()
+
+    if (!puedeRRHH || !empleadoSeleccionado) {
+        mostrarAlerta('alertaRegistrarBaja', 'Sin permisos para registrar la baja', 'danger')
+        return
+    }
+
+    const hoy = new Date().toISOString().slice(0, 10)
+    const fecha = document.getElementById('bajaFecha')?.value.trim() ?? ''
+    const motivo = document.getElementById('bajaMotivo')?.value.trim() ?? ''
+    const nota = document.getElementById('bajaNota')?.value.trim() ?? ''
+
+    limpiarCampos(Object.values(CAMPOS_BAJA))
+    ocultarAlerta('alertaRegistrarBaja')
+
+    const errores = []
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || fecha > hoy) {
+        marcarCampo(CAMPOS_BAJA.termination_date, 'Fecha no válida')
+        errores.push('La fecha de baja debe ser válida y no futura')
+    }
+    if (motivo.length < 3 || motivo.length > 200) {
+        marcarCampo(CAMPOS_BAJA.reason, 'Motivo no válido')
+        errores.push('El motivo debe tener entre 3 y 200 caracteres')
+    }
+    if (nota.length > 500) {
+        marcarCampo(CAMPOS_BAJA.note, 'Nota demasiado larga')
+        errores.push('La nota no puede superar los 500 caracteres')
+    }
+    if (errores.length) {
+        mostrarAlerta('alertaRegistrarBaja', errores.join(' '), 'danger')
+        return
+    }
+
+    const cuerpo = {
+        id_employee: Number(empleadoSeleccionado),
+        termination_date: fecha,
+        reason: motivo
+    }
+    if (nota) cuerpo.note = nota
+
+    const boton = document.getElementById('botonGuardarBaja')
+    if (boton) boton.disabled = true
+    setText('estadoContratos', 'Registrando baja...')
+
+    try {
+        const resultado = await window.HORIZON_API.registrarBaja(cuerpo)
+        cerrarModal('modalRegistrarBaja')
+        await recargarTrasContrato(empleadoSeleccionado)
+        setText('estadoContratos', resultado?.message ?? 'Baja registrada')
+    } catch (error) {
+        console.error('Error al registrar la baja:', error)
+
+        if (error.status === 403) {
+            sinPermisosContratos('Sin permisos para registrar la baja')
+            return
+        }
+        if (error.status === 401) return
+
+        const mensaje = erroresDeValidacion(error, CAMPOS_BAJA, 'No se pudo registrar la baja')
+        mostrarAlerta('alertaRegistrarBaja', mensaje, 'danger')
+        setText('estadoContratos', 'No se pudo registrar la baja')
+    } finally {
+        if (boton) boton.disabled = false
+    }
+}
+
+async function registrarContrato(evento) {
+    evento.preventDefault()
+
+    if (!puedeRRHH || !empleadoSeleccionado) {
+        mostrarAlerta('alertaNuevoContrato', 'Sin permisos para registrar el contrato', 'danger')
+        return
+    }
+
+    const hoy = new Date().toISOString().slice(0, 10)
+    const puesto = document.getElementById('contratoPuesto')?.value.trim() ?? ''
+    const sede = document.getElementById('contratoSede')?.value.trim() ?? ''
+    const departamento = document.getElementById('contratoDepartamento')?.value.trim() ?? ''
+    const tipo = document.getElementById('contratoTipo')?.value.trim() ?? ''
+    const salario = Number(document.getElementById('contratoSalario')?.value ?? '')
+    const fin = document.getElementById('contratoFin')?.value.trim() ?? ''
+
+    limpiarCampos(Object.values(CAMPOS_CONTRATO))
+    ocultarAlerta('alertaNuevoContrato')
+
+    const errores = []
+    if (puesto.length < 3 || puesto.length > 100) {
+        marcarCampo(CAMPOS_CONTRATO.position, 'Puesto no válido')
+        errores.push('El puesto debe tener entre 3 y 100 caracteres')
+    }
+    if (!sede) {
+        marcarCampo(CAMPOS_CONTRATO.sede, 'Selecciona una sede')
+        errores.push('Selecciona una sede')
+    }
+    if (!departamento) {
+        marcarCampo(CAMPOS_CONTRATO.department, 'Selecciona un departamento')
+        errores.push('Selecciona un departamento')
+    }
+    if (!tipo) {
+        marcarCampo(CAMPOS_CONTRATO.contract_type, 'Selecciona un tipo')
+        errores.push('Selecciona un tipo de contrato')
+    }
+    if (!Number.isFinite(salario) || salario < 500000 || salario > 10000000) {
+        marcarCampo(CAMPOS_CONTRATO.salary, 'Salario no válido')
+        errores.push('El salario debe estar entre $ 500.000 y $ 10.000.000')
+    }
+    if (fin && (!/^\d{4}-\d{2}-\d{2}$/.test(fin) || fin < hoy)) {
+        marcarCampo(CAMPOS_CONTRATO.end_date, 'Fecha no válida')
+        errores.push('La fecha de fin no puede ser anterior a hoy')
+    }
+    if (errores.length) {
+        mostrarAlerta('alertaNuevoContrato', errores.join(' '), 'danger')
+        return
+    }
+
+    const cuerpo = {
+        id_employee: Number(empleadoSeleccionado),
+        position: puesto,
+        sede,
+        department: departamento,
+        contract_type: tipo,
+        salary: salario
+    }
+    if (fin) cuerpo.end_date = fin
+
+    const boton = document.getElementById('botonGuardarContrato')
+    if (boton) boton.disabled = true
+    setText('estadoContratos', 'Registrando contrato...')
+
+    try {
+        const resultado = await window.HORIZON_API.crearContrato(cuerpo)
+        cerrarModal('modalNuevoContrato')
+        await recargarTrasContrato(empleadoSeleccionado)
+        setText('estadoContratos', resultado?.message ?? 'Contrato registrado')
+    } catch (error) {
+        console.error('Error al registrar el contrato:', error)
+
+        if (error.status === 403) {
+            sinPermisosContratos('Sin permisos para registrar el contrato')
+            return
+        }
+        if (error.status === 401) return
+
+        const mensaje = erroresDeValidacion(error, CAMPOS_CONTRATO, 'No se pudo registrar el contrato')
+        mostrarAlerta('alertaNuevoContrato', mensaje, 'danger')
+        setText('estadoContratos', 'No se pudo registrar el contrato')
+    } finally {
+        if (boton) boton.disabled = false
+    }
+}
+
 async function cargarIndicadores() {
     const nombres = ['resumen', 'evolución', 'sedes', 'contratos por vencer', 'expedientes', 'permisos']
     const peticiones = await Promise.allSettled([
@@ -536,6 +878,7 @@ async function cargarIndicadores() {
 
     puedeRRHH = ['RRHH', 'ADMIN'].includes(permisos.value?.nivel)
     configurarExportacion()
+    configurarAccionesContrato()
 }
 
 function crearDetalle(empleado) {
@@ -702,6 +1045,10 @@ async function cargarDocumentosEmpleado(idEmpleado) {
 async function verDetalle(id) {
     if (!id) return
 
+    empleadoSeleccionado = String(id)
+    empleadoSeleccionadoNombre = ''
+    configurarAccionesContrato()
+
     const modalElemento = document.getElementById('detalleEmpleado')
     const contenido = document.getElementById('detalleEmpleadoContenido')
     const titulo = document.getElementById('detalleEmpleadoTitulo')
@@ -721,7 +1068,10 @@ async function verDetalle(id) {
     try {
         const data = await window.HORIZON_API.getEmployeeById(id)
         const empleado = data?.employee ?? {}
-        if (titulo) titulo.textContent = nombreCompleto(empleado) || identidad(empleado) || 'Empleado'
+        const nombre = nombreCompleto(empleado) || identidad(empleado) || 'Empleado'
+        if (titulo) titulo.textContent = nombre
+        empleadoSeleccionadoNombre = nombre
+        configurarAccionesContrato()
         contenido.replaceChildren(crearDetalle(empleado))
         await cargarDocumentosEmpleado(id)
     } catch (error) {

@@ -185,6 +185,16 @@ window.HORIZON_API = Object.freeze({
         body: empleado
     }),
 
+    registrarBaja: (baja) => request('/employee/termination', {
+        method: 'POST',
+        body: baja
+    }),
+
+    crearContrato: (contrato) => request('/employee/contract', {
+        method: 'POST',
+        body: contrato
+    }),
+
     // Catálogos: una llamada agrupada para formularios y filtros. Las rutas
     // individuales quedan disponibles para cuando se necesite solo una lista.
     getCatalogos: () => request('/api/catalogos'),

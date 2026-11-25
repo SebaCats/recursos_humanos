@@ -10,7 +10,7 @@
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="css/styles.css?v=20261129">
     <script src="js/config.js?v=20261129"></script>
-    <script src="js/api.js?v=20261201"></script>
+    <script src="js/api.js?v=20261202"></script>
     <script src="js/auth.js?v=20261129"></script>
 </head>
 
@@ -461,9 +461,129 @@
                     </div>
                     <div id="listaDocumentosEmpleado" class="mt-2">Cargando documentos...</div>
                 </div>
+                <div class="modal-body border-top pt-3" id="detalleContratosContenido" hidden>
+                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                        <h2 class="h6 mb-0">Gestión de contratos</h2>
+                        <small id="estadoContratos" class="text-body-tertiary"></small>
+                    </div>
+                    <div class="d-flex gap-2 mt-2 flex-wrap">
+                        <button type="button" id="btnRegistrarBaja" class="btn btn-sm btn-outline-danger"
+                            data-bs-toggle="modal" data-bs-target="#modalRegistrarBaja">Registrar baja</button>
+                        <button type="button" id="btnNuevoContrato" class="btn btn-sm btn-outline-primary"
+                            data-bs-toggle="modal" data-bs-target="#modalNuevoContrato">Nuevo contrato</button>
+                    </div>
+                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Registrar Baja -->
+    <div class="modal fade" id="modalRegistrarBaja" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="tituloRegistrarBaja" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tituloRegistrarBaja">Registrar baja</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form id="formRegistrarBaja" novalidate>
+                    <div class="modal-body">
+                        <div id="alertaRegistrarBaja" class="alert d-none" role="alert"></div>
+                        <p class="small text-body-tertiary mb-3">Empleado: <strong id="bajaEmpleadoNombre">—</strong></p>
+                        <input type="hidden" id="bajaEmpleado" name="id_employee">
+
+                        <div class="mb-3">
+                            <label for="bajaFecha" class="form-label">Fecha de baja</label>
+                            <input type="date" class="form-control" id="bajaFecha" name="termination_date" required>
+                            <div class="invalid-feedback">Indica una fecha válida que no sea futura.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="bajaMotivo" class="form-label">Motivo</label>
+                            <input type="text" class="form-control" id="bajaMotivo" name="reason" minlength="3"
+                                maxlength="200" required placeholder="Renuncia, despido, jubilación...">
+                            <div class="invalid-feedback">El motivo debe tener entre 3 y 200 caracteres.</div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label for="bajaNota" class="form-label">Nota (opcional)</label>
+                            <textarea class="form-control" id="bajaNota" name="note" maxlength="500" rows="2"></textarea>
+                            <div class="invalid-feedback">La nota no puede superar los 500 caracteres.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger" id="botonGuardarBaja">Registrar baja</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nuevo Contrato -->
+    <div class="modal fade" id="modalNuevoContrato" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="tituloNuevoContrato" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tituloNuevoContrato">Nuevo contrato</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form id="formNuevoContrato" novalidate>
+                    <div class="modal-body">
+                        <div id="alertaNuevoContrato" class="alert d-none" role="alert"></div>
+                        <p class="small text-body-tertiary mb-3">Empleado: <strong id="contratoEmpleadoNombre">—</strong></p>
+                        <input type="hidden" id="contratoEmpleado" name="id_employee">
+
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <label for="contratoPuesto" class="form-label">Puesto</label>
+                                <input type="text" class="form-control" id="contratoPuesto" name="position"
+                                    list="listaPuestos" minlength="3" maxlength="100" required>
+                                <div class="invalid-feedback">Indica un puesto de 3 a 100 caracteres.</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="contratoTipo" class="form-label">Tipo de contrato</label>
+                                <select class="form-select" id="contratoTipo" name="contract_type" required>
+                                    <option value="">Cargando...</option>
+                                </select>
+                                <div class="invalid-feedback">Selecciona un tipo de contrato.</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="contratoSede" class="form-label">Sede</label>
+                                <select class="form-select" id="contratoSede" name="sede" required>
+                                    <option value="">Cargando...</option>
+                                </select>
+                                <div class="invalid-feedback">Selecciona una sede.</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="contratoDepartamento" class="form-label">Departamento</label>
+                                <select class="form-select" id="contratoDepartamento" name="department" required>
+                                    <option value="">Selecciona sede primero...</option>
+                                </select>
+                                <div class="invalid-feedback">Selecciona un departamento de la sede.</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="contratoSalario" class="form-label">Salario</label>
+                                <input type="number" class="form-control" id="contratoSalario" name="salary"
+                                    min="500000" max="10000000" step="1000" required>
+                                <div class="invalid-feedback">El salario debe estar entre $ 500.000 y $ 10.000.000.</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="contratoFin" class="form-label">Fecha de fin (opcional)</label>
+                                <input type="date" class="form-control" id="contratoFin" name="end_date">
+                                <div class="invalid-feedback">La fecha de fin no puede ser anterior a hoy.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="botonGuardarContrato">Registrar contrato</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -512,7 +632,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
-    <script src="js/directorio.js?v=20261129"></script>
+    <script src="js/directorio.js?v=20261202"></script>
     <script src="js/password.js?v=20261129"></script>
     <script src="js/busqueda.js?v=20261129"></script>
 </body>
