@@ -234,6 +234,11 @@ window.HORIZON_API = Object.freeze({
 
     // El CSV se descarga en el cliente. Los filtros activos del directorio se
     // envían al backend para exportar exactamente lo que se está viendo.
+    buscar: (q, limit = 5, signal) => {
+        const parametros = new URLSearchParams({ q, limit: String(limit) })
+        return request(`/api/buscar?${parametros}`, { signal })
+    },
+
     exportarEmpleados: async (filtros = {}) => {
         const parametros = new URLSearchParams()
         for (const [clave, valor] of Object.entries(filtros)) {

@@ -6,7 +6,7 @@
 
 Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS**, **JavaScript** y **Bootstrap 5**. Incluye un resumen ejecutivo con indicadores y gráficas, un directorio de empleados y autenticación mediante **cookie de sesión HttpOnly** emitida por el backend.
 
-> **Proyecto en desarrollo:** el frontend consume autenticación, catálogos, reportes, directorio (con paginación y filtros), detalle de empleado y alta, y permite resolver decisiones y programar hitos desde el resumen, además de exportar el directorio a CSV. Quedan como elementos visuales el filtro de estado, "Columnas" y la sección de actividad.
+> **Proyecto en desarrollo:** el frontend consume autenticación, catálogos, reportes, directorio (con paginación y filtros), detalle de empleado y alta, y permite resolver decisiones y programar hitos desde el resumen, exportar el directorio a CSV y buscar en toda la empresa desde el encabezado. Quedan como elementos visuales el filtro de estado, "Columnas" y la sección de actividad.
 
 ## Estado actual
 
@@ -22,6 +22,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 | Bandeja de decisiones | Resolución conectada a `POST /api/decisiones/:id/aprobar|rechazar`, solo para RRHH/ADMIN |
 | Programación de hitos | Conectada a `POST /api/hitos`, solo para RRHH/ADMIN |
 | Exportación CSV | Conectada a `GET /api/exportar/empleados`, con los filtros activos y solo para RRHH/ADMIN |
+| Búsqueda global | Conectada a `GET /api/buscar` en el encabezado de ambas páginas |
 
 ## Características
 
@@ -39,7 +40,8 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 - Buscador que filtra por nombre, correo o ID, más filtros funcionales de departamento, sede y contrato. Buscar o filtrar reinicia la paginación.
 - Tabla paginada (10 filas por página) cargada desde `GET /employee/getPage`; al pulsar un nombre se consulta `GET /employee/getById/:id`. Si el backend aún no tiene ese endpoint, se usa `GET /employee/getAll` y se pagina en el cliente.
 - Modal "Añadir empleado" con sedes, departamentos, tipos de contrato y puestos cargados desde `GET /api/catalogos`. Envía `POST /employee/create` y muestra la contraseña temporal.
-- El botón "Exportar" descarga un CSV con `GET /api/exportar/empleados` y los filtros activos (búsqueda, departamento, sede y contrato); solo se muestra con nivel RRHH/ADMIN.
+- El botón “Exportar” descarga un CSV con `GET /api/exportar/empleados` y los filtros activos (búsqueda, departamento, sede y contrato); solo se muestra con nivel RRHH/ADMIN.
+- El buscador del encabezado consulta `GET /api/buscar` (empleados, decisiones, hitos y actividad) con debounce y muestra los resultados agrupados. Al elegir una persona se abre su detalle en el directorio; si estás en el resumen, se abre el directorio con el nombre ya buscado.
 
 **Inicio de sesión** (`login.html`):
 - Envía las credenciales a `POST /login`.

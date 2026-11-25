@@ -630,6 +630,13 @@ async function registrarEmpleado(evento) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // La búsqueda global del encabezado puede abrir el directorio con ?q=...
+    const qInicial = new URLSearchParams(window.location.search).get('q')
+    if (qInicial) {
+        const buscador = document.getElementById('buscarEmpleados')
+        if (buscador) buscador.value = qInicial
+    }
+
     cargarCatalogos()
     cargarEmpleados()
     cargarIndicadores()
