@@ -127,7 +127,10 @@ async function ejecutarBusquedaGlobal(q) {
         if (error.name === 'AbortError' || error.status === 401) return
         console.error('Error en la búsqueda global:', error)
         if (!contenedor) return
-        contenedor.replaceChildren(itemResultado('No se pudo completar la búsqueda', error.message))
+        const mensaje = error.status === 403
+            ? 'No tienes permisos para buscar en la empresa'
+            : error.message
+        contenedor.replaceChildren(itemResultado('No se pudo completar la búsqueda', mensaje))
         mostrarResultadosBusqueda(contenedor)
     }
 }
