@@ -8,6 +8,9 @@ const etiquetasSede = { NORTH: 'Norte', CENTER: 'Centro', SOUTH: 'Sur' }
 
 let periodoEvolucion = 'mes'
 let datosResumen = null
+let datosDecisiones = null
+let puedeResolverDecisiones = false
+let accionesDecisionesConfiguradas = false
 
 function setText(id, texto) {
     const elemento = document.getElementById(id)
@@ -298,7 +301,18 @@ function renderizarNominaDetalle(datos, salarioActual) {
     setText('nominaDetalle', 'Sin cierre registrado · salario vigente')
 }
 
-function renderizarDecisiones(datos) {
+function botonDecision(id, accion, etiqueta, clase) {
+    const boton = document.createElement('button')
+    boton.type = 'button'
+    boton.className = `btn btn-sm ${clase}`
+    boton.textContent = etiqueta
+    boton.dataset.decisionId = String(id)
+    boton.dataset.accion = accion
+    boton.setAttribute('aria-label', `${etiqueta} solicitud ${id}`)
+    return boton
+}
+
+function renderizarDecisiones(datos, puedeResolver = false) {
     const cuerpo = document.getElementById('decisionesBody')
     if (!cuerpo) return
 
@@ -307,11 +321,11 @@ function renderizarDecisiones(datos) {
     if (!datos || !Array.isArray(datos.lista) || datos.lista.length === 0) {
         const fila = document.createElement('tr')
         const columna = celda(datos ? 'No hay decisiones pendientes' : 'No se pudieron cargar las decisiones')
-        columna.colSpan = 4
+        columna.colSpan = 5
         columna.className = 'text-body-tertiary'
         fila.append(columna)
         cuerpo.append(fila)
-        setText('decisionesDetalle', 'Bandeja al día')
+        setText('decisionesDetalle', datos ? 'Bandeja al día' : 'No se pudieron cargar las decisiones')
         return
     }
 
@@ -329,10 +343,98 @@ function renderizarDecisiones(datos) {
             celda(fechaCorta(solicitud.vence)),
             celda(estado)
         )
+
+        const acciones = document.createElement('td')
+        const pendiente = ['PENDIENTE', 'INCIDENCIAS'].includes(solicitud.status)
+        if (puedeResolver && pendiente) {
+            acciones.append(
+                botonDecision(solicitud.id, 'aprobar', 'Aprobar', 'btn-outline-success me-1'),
+                botonDecision(solicitud.id, 'rechazar', 'Rechazar', 'btn-outline-danger')
+            )
+        } else {
+            acciones.textContent = '—'
+        }
+        fila.append(acciones)
         cuerpo.append(fila)
     }
 
     setText('decisionesDetalle', `${datos.cantidad} ${datos.cantidad === 1 ? 'pendiente' : 'pendientes'}`)
+}
+
+// Tras resolver una decisión se vuelven a consultar la bandeja y la actividad:
+// el backend registra la traza en la misma transacción y no hay caché que
+// invalidar.
+async function recargarDecisiones() {
+    const nombres = ['decisiones', 'actividad']
+    const peticiones = await Promise.allSettled([
+        window.HORIZON_API.getDecisiones(),
+        window.HORIZON_API.getActividad()
+    ])
+
+    peticiones.forEach((peticion, indice) => {
+        if (peticion.status === 'rejected') {
+            console.error(`Error al recargar ${nombres[indice]}:`, peticion.reason)
+        }
+    })
+
+    if (peticiones[0].status === 'fulfilled') {
+        datosDecisiones = peticiones[0].value
+        renderizarDecisiones(datosDecisiones, puedeResolverDecisiones)
+    } else {
+        document.getElementById('decisionesBody')?.querySelectorAll('button[data-decision-id]')
+            .forEach((elemento) => { elemento.disabled = false })
+    }
+    if (peticiones[1].status === 'fulfilled') {
+        renderizarActividad(peticiones[1].value)
+    }
+}
+
+async function resolverDecisionDesdeBandeja(evento) {
+    const boton = evento.target.closest('button[data-decision-id][data-accion]')
+    if (!boton || boton.disabled || !puedeResolverDecisiones) return
+
+    const accion = boton.dataset.accion
+    if (!['aprobar', 'rechazar'].includes(accion)) return
+
+    const cuerpo = document.getElementById('decisionesBody')
+    cuerpo?.querySelectorAll('button[data-decision-id]').forEach((elemento) => {
+        elemento.disabled = true
+    })
+    setText('decisionesDetalle', accion === 'aprobar' ? 'Aprobando solicitud...' : 'Rechazando solicitud...')
+
+    try {
+        const id = boton.dataset.decisionId
+        const resultado = accion === 'aprobar'
+            ? await window.HORIZON_API.aprobarDecision(id)
+            : await window.HORIZON_API.rechazarDecision(id)
+        setText('decisionesDetalle', resultado?.message ?? 'Decisión actualizada')
+        await recargarDecisiones()
+    } catch (error) {
+        console.error('Error al resolver la decisión:', error)
+
+        if (error.status === 403) {
+            puedeResolverDecisiones = false
+            renderizarDecisiones(datosDecisiones, false)
+            setText('decisionesDetalle', 'Sin permisos para resolver decisiones')
+        } else if (error.status === 409) {
+            setText('decisionesDetalle', 'La solicitud ya estaba resuelta')
+            await recargarDecisiones()
+        } else {
+            setText('decisionesDetalle', error.message ?? 'No se pudo resolver la decisión')
+            cuerpo?.querySelectorAll('button[data-decision-id]').forEach((elemento) => {
+                elemento.disabled = false
+            })
+        }
+    }
+}
+
+function configurarAccionesDecisiones() {
+    if (accionesDecisionesConfiguradas) return
+    const cuerpo = document.getElementById('decisionesBody')
+    if (!cuerpo) return
+
+    cuerpo.addEventListener('click', resolverDecisionDesdeBandeja)
+    accionesDecisionesConfiguradas = true
 }
 
 function renderizarActividad(datos) {
@@ -384,7 +486,7 @@ function renderizarHito(dato) {
 async function cargarIndicadores(salarioActual) {
     const nombres = [
         'rotación', 'ausentismo', 'contratos por vencer', 'decisiones',
-        'actividad', 'hitos', 'nómina', 'expedientes'
+        'actividad', 'hitos', 'nómina', 'expedientes', 'permisos'
     ]
 
     const peticiones = await Promise.allSettled([
@@ -395,7 +497,8 @@ async function cargarIndicadores(salarioActual) {
         window.HORIZON_API.getActividad(),
         window.HORIZON_API.getHitos(),
         window.HORIZON_API.getNomina(),
-        window.HORIZON_API.getExpedientes()
+        window.HORIZON_API.getExpedientes(),
+        window.HORIZON_API.getPermisos()
     ])
 
     peticiones.forEach((peticion, indice) => {
@@ -408,7 +511,12 @@ async function cargarIndicadores(salarioActual) {
 
     renderizarRotacion(valor(0))
     renderizarAusentismo(valor(1))
-    renderizarDecisiones(valor(3))
+
+    datosDecisiones = valor(3)
+    puedeResolverDecisiones = ['RRHH', 'ADMIN'].includes(peticiones[8].value?.nivel)
+    configurarAccionesDecisiones()
+    renderizarDecisiones(datosDecisiones, puedeResolverDecisiones)
+
     renderizarActividad(valor(4))
     renderizarHito(peticiones[5].status === 'fulfilled' ? peticiones[5].value : undefined)
     renderizarNominaDetalle(valor(6), salarioActual)

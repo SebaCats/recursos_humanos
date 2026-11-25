@@ -208,5 +208,16 @@ window.HORIZON_API = Object.freeze({
     getActividad: () => request('/api/actividad'),
     getHitos: () => request('/api/hitos'),
     getNomina: () => request('/api/nomina'),
-    getExpedientes: () => request('/api/expedientes')
+    getExpedientes: () => request('/api/expedientes'),
+
+    // Permisos resueltos por el backend desde la BD, no desde el token.
+    getPermisos: () => request('/api/permisos'),
+
+    aprobarDecision: (id) => request(`/api/decisiones/${encodeURIComponent(id)}/aprobar`, {
+        method: 'POST'
+    }),
+
+    rechazarDecision: (id) => request(`/api/decisiones/${encodeURIComponent(id)}/rechazar`, {
+        method: 'POST'
+    })
 })
