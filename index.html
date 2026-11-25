@@ -18,7 +18,7 @@
 <body class="d-flex flex-row bg-gray">
 
     <!-- Barra lateral -->
-    <aside class="d-flex flex-column vh-100 p-3 border-end bg-white shadow-r" style="min-width: 250px;">
+    <aside id="menuLateral" class="offcanvas-lg offcanvas-start d-flex flex-column vh-100 p-3 border-end bg-white shadow-r" style="min-width: 250px;" tabindex="-1">
         <!-- Sección usuario -->
         <section class="d-flex align-items-center gap-2 mb-4 pb-3 border-bottom">
             <img src="https://randomuser.me/api/portraits/thumb/men/75.jpg" class="rounded-circle" width="36"
@@ -50,6 +50,10 @@
         </div>
     </aside>
 
+    <button class="btn btn-outline-secondary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuLateral" aria-controls="menuLateral">
+        <i class="bi bi-list"></i>
+    </button>
+
     <!-- Área de contenido principal -->
     <div class="flex-grow-1 d-flex flex-column overflow-auto vh-100">
         <!-- Header  -->
@@ -57,8 +61,11 @@
             class="sticky-top z-3 d-flex align-items-center justify-content-between p-3 mx-4 mt-0 rounded border-bottom shadow-b bg-white">
             <h5 class="text-body-tertiary d-flex m-0">Horizon ><div class="text-black mx-1">Recursos humanos</div>
             </h5>
-            <input class="form-control me-2 search-icon bg-gray border-0" type="search"
+            <input class="form-control me-2 search-icon bg-gray border-0 d-none d-sm-block" type="search"
                 placeholder="Buscar en mi empresa..." style="width: 250px;" />
+            <button class="btn search-icon d-sm-none" type="button" aria-label="Buscar">
+                <i class="bi bi-search"></i>
+            </button>
         </header>
 
         <!-- Contenido principal (antes pages/resumen.ejs) -->
@@ -111,7 +118,7 @@
             <div class="container-fluid p-0 my-3">
                 <div class="row g-3">
                     <!-- Card evolución plantilla -->
-                    <div class="col-8">
+                    <div class="col-12 col-lg-8">
                         <article class="card shadow-b p-3 h-100">
                             <section class="d-flex justify-content-between align-items-start gap-2">
                                 <div>
@@ -134,7 +141,7 @@
                     </div>
 
                     <!-- Card distribución departamento -->
-                    <div class="col-4">
+                    <div class="col-12 col-lg-4">
                         <article class="card shadow-b p-3 h-100">
                             <section>
                                 <h4>Distribución por departamento</h4>
@@ -189,8 +196,8 @@
                         </article>
                     </div>
                     <!-- Card decisiones -->
-                    <div class="col-8">
-                        <article class="card shadow-b p-3 h-100">
+                    <div class="col-12 col-lg-8">
+                        <article class="card shadow-b p-3 h-100 table-responsive">
                             <section>
                                 <h4>Tu bandeja de decisiones</h4>
                                 <small class="text-body-tertiary">Solicitudes pendientes de resolución</small>
@@ -218,7 +225,7 @@
                         </article>
                     </div>
                     <!-- Card actividad reciente -->
-                    <div class="col-4">
+                    <div class="col-12 col-lg-4">
                         <article class="card shadow-b p-3 h-100">
                             <section>
                                 <h4>Actividad reciente</h4>

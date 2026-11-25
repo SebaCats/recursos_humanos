@@ -1,5 +1,7 @@
 # Horizon · Recursos Humanos
 
+> **Demo / Despliegue en Vercel:** [https://nexo-erp.vercel.app](https://recursoshumanos-gilt.vercel.app/login.html)
+
 > Copia de despliegue: consulta `../README.md` para Vercel y la API. La base del API se configura en `js/config.js` (vacía en Vercel, `http://localhost:3000` en local); `vercel.json` proxya las rutas al backend.
 
 Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS**, **JavaScript** y **Bootstrap 5**. Incluye un resumen ejecutivo con indicadores y gráficas, un directorio de empleados y autenticación mediante **cookie de sesión HttpOnly** emitida por el backend.
@@ -246,6 +248,16 @@ Al ser un sitio estático, se puede publicar directamente:
 - **API:** requiere que el backend esté disponible en `http://localhost:3000` (o la URL configurada) con CORS y credenciales habilitados.
 - **Sesión:** la cookie es `HttpOnly`, por lo que el frontend no puede leerla; el estado se consulta con `/check-session`.
 - **Duplicación de layout:** al no utilizar un motor de plantillas en el frontend, la barra lateral y la cabecera se repiten entre `index.html` y `directorio.html`.
+
+---
+
+### Integrantes del proyecto
+
+| Nombre | Rol |
+| :--- | :--- |
+| Guillermo Sepúlveda | Diseño UI/UX |
+| Rodrigo Ruiz | Interactividad / JS |
+| Fernando Alvarado | Jefe Proyecto |
 
 ---
 
