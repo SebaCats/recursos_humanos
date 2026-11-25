@@ -31,7 +31,10 @@ function extraerCantidades(evolucion, campo, longitud) {
 
     if (Array.isArray(evolucion)) {
         for (const fila of evolucion) {
-            const valor = fila?.[campo]
+            // La serie mensual puede llegar ya normalizada (`fecha`) desde
+            // getEvolucionContrataciones; aceptar ambos nombres hace que la
+            // normalización sea idempotente.
+            const valor = fila?.[campo] ?? (campo === 'mes' ? fila?.fecha : undefined)
             if (typeof valor !== 'string') continue
 
             const clave = valor.slice(0, longitud)
@@ -54,7 +57,7 @@ function normalizarEvolucion(evolucion) {
 
     if (Array.isArray(evolucion)) {
         for (const fila of evolucion) {
-            const valor = fila?.mes
+            const valor = fila?.mes ?? fila?.fecha
             if (typeof valor !== 'string') continue
 
             const clave = valor.slice(0, 7)
