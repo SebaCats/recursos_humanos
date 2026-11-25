@@ -6,7 +6,7 @@
 
 Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS**, **JavaScript** y **Bootstrap 5**. Incluye un resumen ejecutivo con indicadores y gráficas, un directorio de empleados y autenticación mediante **cookie de sesión HttpOnly** emitida por el backend.
 
-> **Proyecto en desarrollo:** el frontend consume autenticación, catálogos, reportes, directorio (con paginación y filtros), detalle de empleado y alta, y permite resolver decisiones y programar hitos desde el resumen, exportar el directorio a CSV, buscar en toda la empresa desde el encabezado y gestionar el expediente documental desde la modal del empleado. Quedan como elementos visuales el filtro de estado, "Columnas" y la sección de actividad.
+> **Proyecto en desarrollo:** el frontend consume autenticación, catálogos, reportes, directorio (con paginación y filtros), detalle de empleado y alta, y permite resolver decisiones y programar hitos desde el resumen, exportar el directorio a CSV, buscar en toda la empresa desde el encabezado, gestionar el expediente documental desde la modal del empleado y completar el ciclo de ausencias (solicitar, aprobar y rechazar). Quedan como elementos visuales el filtro de estado, "Columnas" y la sección de actividad.
 
 ## Estado actual
 
@@ -24,6 +24,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 | Exportación CSV | Conectada a `GET /api/exportar/empleados`, con los filtros activos y solo para RRHH/ADMIN |
 | Búsqueda global | Conectada a `GET /api/buscar` en el encabezado de ambas páginas |
 | Expediente documental | Visible en la modal del empleado; estados editables con `PATCH /api/documentos/:id` solo para RRHH/ADMIN |
+| Ciclo de ausencias | Solicitud con `POST /api/ausencias`; bandeja con `GET /api/ausencias` y resolución con `POST /api/ausencias/:id/aprobar|rechazar` solo para RRHH/ADMIN |
 
 ## Características
 
@@ -44,6 +45,7 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 - El botón “Exportar” descarga un CSV con `GET /api/exportar/empleados` y los filtros activos (búsqueda, departamento, sede y contrato); solo se muestra con nivel RRHH/ADMIN.
 - El buscador del encabezado consulta `GET /api/buscar` (empleados, decisiones, hitos y actividad) con debounce y muestra los resultados agrupados. Al elegir una persona se abre su modal de detalle en el directorio; si estás en el resumen, se abre el directorio con el nombre ya buscado.
 - La modal del empleado muestra su expediente documental con `GET /api/expedientes/detalle`. Los estados (`PENDIENTE`, `ACTUALIZADO`, `VENCIDO`) se pueden cambiar con `PATCH /api/documentos/:id` solo si `GET /api/permisos` devuelve RRHH/ADMIN; al guardar se recarga el indicador “Expedientes completos” y queda traza en la actividad.
+- La tarjeta “Ausencias del equipo” lista `GET /api/ausencias` con las pendientes primero. El botón “Solicitar ausencia” abre un formulario con el empleado, tipo, rango de fechas y días; cualquier rol puede enviarlo. RRHH/ADMIN ve además los botones de aprobación y rechazo. Después de escribir se recargan la bandeja, el KPI de ausentismo y la actividad reciente.
 
 **Inicio de sesión** (`login.html`):
 - Envía las credenciales a `POST /login`.
@@ -248,8 +250,8 @@ Al ser un sitio estático, se puede publicar directamente:
 
 ## Limitaciones conocidas
 
-- **Datos:** el resumen, la gráfica de altas, el directorio, los catálogos y el alta usan datos reales. Las tarjetas de rotación/ausentismo, la bandeja de decisiones y la actividad reciente siguen siendo ejemplos (la BD no registra bajas ni ausencias).
-- **Directorio:** la paginación y los filtros de departamento, sede y contrato funcionan; el filtro de estado, "Exportar" y "Columnas" siguen siendo elementos visuales.
+- **Datos:** el resumen, la gráfica de altas, el directorio, los catálogos, el alta, las tarjetas de rotación/ausentismo, la bandeja de decisiones, las ausencias, los hitos y la actividad reciente usan datos reales. Sigue sin registrarse bajas, por lo que la rotación se calcula con los datos disponibles.
+- **Directorio:** la paginación, los filtros de departamento, sede y contrato, y la exportación CSV funcionan; el filtro de estado y "Columnas" siguen siendo elementos visuales.
 - **Contratos:** la BD no tiene fecha de vencimiento, por lo que la tarjeta "Contratos próximos a vencer" no se calcula desde la API.
 - **API:** requiere que el backend esté disponible en `http://localhost:3000` (o la URL configurada) con CORS y credenciales habilitados.
 - **Sesión:** la cookie es `HttpOnly`, por lo que el frontend no puede leerla; el estado se consulta con `/check-session`.

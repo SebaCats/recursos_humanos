@@ -11,7 +11,7 @@
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="css/styles.css?v=20261128">
     <script src="js/config.js?v=20261123"></script>
-    <script src="js/api.js?v=20261129"></script>
+    <script src="js/api.js?v=20261130"></script>
     <script src="js/auth.js?v=20261123"></script>
 </head>
 
@@ -249,6 +249,40 @@
                         </article>
                     </div>
 
+                    <!-- Card ausencias -->
+                    <div class="col-12">
+                        <article class="card shadow-b p-3 table-responsive">
+                            <section class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                <div>
+                                    <h4>Ausencias del equipo</h4>
+                                    <small id="ausenciasDetalle" class="text-body-tertiary">Cargando ausencias...</small>
+                                </div>
+                                <button type="button" id="btnSolicitarAusencia" class="btn btn-sm btn-outline-primary"
+                                    data-bs-toggle="modal" data-bs-target="#modalSolicitarAusencia">
+                                    Solicitar ausencia
+                                </button>
+                            </section>
+
+                            <table class="table mt-2">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">EMPLEADO</th>
+                                        <th scope="col">TIPO</th>
+                                        <th scope="col">PERIODO</th>
+                                        <th scope="col">DÍAS</th>
+                                        <th scope="col">ESTADO</th>
+                                        <th scope="col">ACCIONES</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ausenciasBody">
+                                    <tr>
+                                        <td colspan="6" class="text-body-tertiary">Cargando ausencias...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </article>
+                    </div>
+
                 </div>
             </div>
 
@@ -317,6 +351,65 @@
         </div>
     </div>
 
+    <!-- Modal Solicitar Ausencia -->
+    <div class="modal fade" id="modalSolicitarAusencia" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="tituloSolicitarAusencia" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tituloSolicitarAusencia">Solicitar ausencia</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form id="formSolicitarAusencia" novalidate>
+                    <div class="modal-body">
+                        <div id="alertaSolicitarAusencia" class="alert d-none" role="alert"></div>
+
+                        <div class="mb-3">
+                            <label for="ausenciaEmpleado" class="form-label">Empleado</label>
+                            <select class="form-select" id="ausenciaEmpleado" name="id_employee" required>
+                                <option value="">Cargando empleados...</option>
+                            </select>
+                            <div class="invalid-feedback">Selecciona un empleado.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="ausenciaTipo" class="form-label">Tipo</label>
+                            <select class="form-select" id="ausenciaTipo" name="type" required>
+                                <option value="VACACIONES">Vacaciones</option>
+                                <option value="ENFERMEDAD">Enfermedad</option>
+                                <option value="PERMISO">Permiso</option>
+                                <option value="LICENCIA">Licencia</option>
+                                <option value="OTRO">Otro</option>
+                            </select>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-sm-6">
+                                <label for="ausenciaInicio" class="form-label">Desde</label>
+                                <input type="date" class="form-control" id="ausenciaInicio" name="start_date" required>
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="ausenciaFin" class="form-label">Hasta</label>
+                                <input type="date" class="form-control" id="ausenciaFin" name="end_date" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label for="ausenciaDias" class="form-label">Días</label>
+                            <input type="number" class="form-control" id="ausenciaDias" name="days" min="1" max="365"
+                                step="1" required>
+                            <div class="invalid-feedback">Indica entre 1 y 365 días.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="botonGuardarAusencia">Solicitar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Cambiar Contraseña -->
     <div class="modal fade" id="modalCambiarContrasena" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
         aria-labelledby="tituloCambiarContrasena" aria-hidden="true">
@@ -363,7 +456,7 @@
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/graficas.js?v=20261123"></script>
-    <script src="js/resumen.js?v=20261128"></script>
+    <script src="js/resumen.js?v=20261130"></script>
     <script src="js/password.js?v=20261123"></script>
     <script src="js/busqueda.js?v=20261128"></script>
 </body>

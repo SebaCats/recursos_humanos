@@ -9,6 +9,7 @@ const etiquetasSede = { NORTH: 'Norte', CENTER: 'Centro', SOUTH: 'Sur' }
 let periodoEvolucion = 'mes'
 let datosResumen = null
 let datosDecisiones = null
+let datosAusencias = null
 let puedeGestionarRRHH = false
 let accionesDecisionesConfiguradas = false
 let formularioHitoConfigurado = false
@@ -629,10 +630,326 @@ function renderizarHito(dato) {
     )
 }
 
+const CAMPOS_AUSENCIA = {
+    id_employee: 'ausenciaEmpleado',
+    type: 'ausenciaTipo',
+    start_date: 'ausenciaInicio',
+    end_date: 'ausenciaFin',
+    days: 'ausenciaDias'
+}
+
+const ETIQUETAS_AUSENCIA = {
+    VACACIONES: 'Vacaciones',
+    ENFERMEDAD: 'Enfermedad',
+    PERMISO: 'Permiso',
+    LICENCIA: 'Licencia',
+    OTRO: 'Otro'
+}
+
+function botonAusencia(id, accion, etiqueta, clase) {
+    const boton = document.createElement('button')
+    boton.type = 'button'
+    boton.className = `btn btn-sm ${clase}`
+    boton.textContent = etiqueta
+    boton.dataset.ausenciaId = String(id)
+    boton.dataset.accion = accion
+    boton.setAttribute('aria-label', `${etiqueta} ausencia ${id}`)
+    return boton
+}
+
+function renderizarAusencias(datos, puedeGestionar = false) {
+    const cuerpo = document.getElementById('ausenciasBody')
+    if (!cuerpo) return
+
+    cuerpo.replaceChildren()
+
+    const lista = Array.isArray(datos) ? datos : []
+    if (lista.length === 0) {
+        const fila = document.createElement('tr')
+        const columna = celda(datos ? 'No hay ausencias registradas' : 'No se pudieron cargar las ausencias')
+        columna.colSpan = 6
+        columna.className = 'text-body-tertiary'
+        fila.append(columna)
+        cuerpo.append(fila)
+        setText('ausenciasDetalle', datos ? 'Sin solicitudes' : 'No se pudieron cargar las ausencias')
+        return
+    }
+
+    for (const ausencia of lista) {
+        const fila = document.createElement('tr')
+        const estado = document.createElement('span')
+        estado.className = 'badge text-bg-' + (
+            ausencia.status === 'APROBADA' ? 'success'
+                : ausencia.status === 'RECHAZADA' ? 'danger' : 'warning'
+        )
+        estado.textContent = ausencia.status
+
+        const acciones = document.createElement('td')
+        if (puedeGestionar && ausencia.status === 'PENDIENTE') {
+            acciones.append(
+                botonAusencia(ausencia.id, 'aprobar', 'Aprobar', 'btn-outline-success me-1'),
+                botonAusencia(ausencia.id, 'rechazar', 'Rechazar', 'btn-outline-danger')
+            )
+        } else {
+            acciones.textContent = '—'
+        }
+
+        fila.append(
+            celda(ausencia.empleado ?? '—'),
+            celda(ETIQUETAS_AUSENCIA[ausencia.type] ?? ausencia.type),
+            celda(`${fechaCorta(ausencia.start_date)} – ${fechaCorta(ausencia.end_date)}`),
+            celda(ausencia.days ?? '—'),
+            (() => { const td = document.createElement('td'); td.append(estado); return td })(),
+            acciones
+        )
+        cuerpo.append(fila)
+    }
+
+    const pendientes = lista.filter((ausencia) => ausencia.status === 'PENDIENTE').length
+    setText(
+        'ausenciasDetalle',
+        pendientes === 0
+            ? `${lista.length} ${lista.length === 1 ? 'registro' : 'registros'} · Sin pendientes`
+            : `${pendientes} ${pendientes === 1 ? 'pendiente' : 'pendientes'} de ${lista.length}`
+    )
+}
+
+function configurarAccionesAusencias() {
+    const cuerpo = document.getElementById('ausenciasBody')
+    if (!cuerpo || cuerpo.dataset.configurado === 'true') return
+    cuerpo.addEventListener('click', resolverAusenciaDesdeBandeja)
+    cuerpo.dataset.configurado = 'true'
+}
+
+// Toda resolución recarga la bandeja, el indicador de ausentismo y la actividad,
+// tal como hace el backend dentro de la misma transacción.
+async function recargarAusencias() {
+    const nombres = ['ausencias', 'ausentismo', 'actividad']
+    const peticiones = await Promise.allSettled([
+        window.HORIZON_API.getAusencias(),
+        window.HORIZON_API.getAusentismo(),
+        window.HORIZON_API.getActividad()
+    ])
+
+    peticiones.forEach((peticion, indice) => {
+        if (peticion.status === 'rejected') {
+            console.error(`Error al recargar ${nombres[indice]}:`, peticion.reason)
+        }
+    })
+
+    if (peticiones[0].status === 'fulfilled') {
+        datosAusencias = peticiones[0].value
+        renderizarAusencias(datosAusencias, puedeGestionarRRHH)
+    } else {
+        document.getElementById('ausenciasBody')?.querySelectorAll('button[data-ausencia-id]')
+            .forEach((elemento) => { elemento.disabled = false })
+    }
+    if (peticiones[1].status === 'fulfilled') renderizarAusentismo(peticiones[1].value)
+    if (peticiones[2].status === 'fulfilled') renderizarActividad(peticiones[2].value)
+}
+
+async function resolverAusenciaDesdeBandeja(evento) {
+    const boton = evento.target.closest('button[data-ausencia-id][data-accion]')
+    if (!boton || boton.disabled || !puedeGestionarRRHH) return
+
+    const accion = boton.dataset.accion
+    if (!['aprobar', 'rechazar'].includes(accion)) return
+
+    const cuerpo = document.getElementById('ausenciasBody')
+    cuerpo?.querySelectorAll('button[data-ausencia-id]').forEach((elemento) => {
+        elemento.disabled = true
+    })
+    setText('ausenciasDetalle', accion === 'aprobar' ? 'Aprobando ausencia...' : 'Rechazando ausencia...')
+
+    try {
+        const id = boton.dataset.ausenciaId
+        const resultado = accion === 'aprobar'
+            ? await window.HORIZON_API.aprobarAusencia(id)
+            : await window.HORIZON_API.rechazarAusencia(id)
+        setText('ausenciasDetalle', resultado?.message ?? 'Ausencia actualizada')
+        await recargarAusencias()
+    } catch (error) {
+        console.error('Error al resolver la ausencia:', error)
+
+        if (error.status === 403) {
+            puedeGestionarRRHH = false
+            renderizarAusencias(datosAusencias, false)
+            renderizarDecisiones(datosDecisiones, false)
+            configurarHito()
+            setText('ausenciasDetalle', 'Sin permisos para resolver ausencias')
+            return
+        }
+
+        setText(
+            'ausenciasDetalle',
+            error.status === 409
+                ? 'La ausencia ya estaba resuelta'
+                : error.message ?? 'No se pudo resolver la ausencia'
+        )
+        await recargarAusencias()
+    }
+}
+
+function marcarCampoAusencia(ruta, mensaje) {
+    const id = CAMPOS_AUSENCIA[ruta]
+    const campo = id ? document.getElementById(id) : null
+    if (!campo) return
+    campo.classList.add('is-invalid')
+    campo.setAttribute('aria-invalid', String(Boolean(mensaje)))
+}
+
+function limpiarCamposAusencia() {
+    for (const id of Object.values(CAMPOS_AUSENCIA)) {
+        const campo = document.getElementById(id)
+        if (!campo) continue
+        campo.classList.remove('is-invalid')
+        campo.removeAttribute('aria-invalid')
+    }
+}
+
+function mostrarAlertaAusencia(mensaje, tipo) {
+    const alerta = document.getElementById('alertaSolicitarAusencia')
+    if (!alerta) return
+    alerta.className = `alert alert-${tipo}`
+    alerta.textContent = mensaje
+    alerta.classList.remove('d-none')
+}
+
+function ocultarAlertaAusencia() {
+    const alerta = document.getElementById('alertaSolicitarAusencia')
+    if (!alerta) return
+    alerta.className = 'alert d-none'
+    alerta.textContent = ''
+}
+
+function cerrarModalAusencia() {
+    const modal = document.getElementById('modalSolicitarAusencia')
+    if (modal && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        bootstrap.Modal.getInstance(modal)?.hide()
+    }
+}
+
+async function cargarEmpleadosAusencia() {
+    const selector = document.getElementById('ausenciaEmpleado')
+    if (!selector) return
+
+    try {
+        const datos = await window.HORIZON_API.getEmployees()
+        const empleados = Array.isArray(datos?.employees) ? datos.employees : []
+        const fragmento = document.createDocumentFragment()
+        const inicial = document.createElement('option')
+        inicial.value = ''
+        inicial.textContent = 'Selecciona un empleado'
+        fragmento.append(inicial)
+
+        for (const empleado of empleados) {
+            const opcion = document.createElement('option')
+            opcion.value = String(empleado.id)
+            opcion.textContent = [empleado.name, empleado.last_name].filter(Boolean).join(' ')
+            fragmento.append(opcion)
+        }
+
+        selector.replaceChildren(fragmento)
+    } catch (error) {
+        console.error('Error al cargar los empleados:', error)
+        selector.replaceChildren()
+        const opcion = document.createElement('option')
+        opcion.value = ''
+        opcion.textContent = 'No se pudieron cargar los empleados'
+        selector.append(opcion)
+    }
+}
+
+function configurarSolicitudAusencia() {
+    const boton = document.getElementById('btnSolicitarAusencia')
+    const formulario = document.getElementById('formSolicitarAusencia')
+    const hoy = new Date().toISOString().slice(0, 10)
+
+    boton?.addEventListener('click', cargarEmpleadosAusencia)
+
+    for (const id of ['ausenciaInicio', 'ausenciaFin']) {
+        const campo = document.getElementById(id)
+        if (campo && !campo.min) campo.min = hoy
+    }
+
+    if (!formulario || formulario.dataset.configurado === 'true') return
+    formulario.addEventListener('submit', registrarAusencia)
+    formulario.dataset.configurado = 'true'
+}
+
+async function registrarAusencia(evento) {
+    evento.preventDefault()
+
+    const idEmpleado = document.getElementById('ausenciaEmpleado')?.value ?? ''
+    const tipo = document.getElementById('ausenciaTipo')?.value ?? ''
+    const inicio = document.getElementById('ausenciaInicio')?.value ?? ''
+    const fin = document.getElementById('ausenciaFin')?.value ?? ''
+    const dias = document.getElementById('ausenciaDias')?.value ?? ''
+
+    limpiarCamposAusencia()
+    ocultarAlertaAusencia()
+
+    const errores = []
+    if (!idEmpleado) {
+        marcarCampoAusencia('id_employee', 'Selecciona un empleado')
+        errores.push('Selecciona un empleado')
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(inicio)) {
+        marcarCampoAusencia('start_date', 'Fecha no válida')
+        errores.push('La fecha de inicio no es válida')
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fin) || (inicio && fin < inicio)) {
+        marcarCampoAusencia('end_date', 'Fecha no válida')
+        errores.push('La fecha de fin no puede ser anterior al inicio')
+    }
+    if (!Number.isInteger(Number(dias)) || Number(dias) < 1 || Number(dias) > 365) {
+        marcarCampoAusencia('days', 'Días no válidos')
+        errores.push('Indica entre 1 y 365 días')
+    }
+    if (errores.length) {
+        mostrarAlertaAusencia(errores.join(' '), 'danger')
+        return
+    }
+
+    const cuerpo = {
+        id_employee: Number(idEmpleado),
+        type: tipo,
+        start_date: inicio,
+        end_date: fin,
+        days: Number(dias)
+    }
+
+    const boton = document.getElementById('botonGuardarAusencia')
+    if (boton) boton.disabled = true
+    setText('ausenciasDetalle', 'Registrando ausencia...')
+
+    try {
+        const resultado = await window.HORIZON_API.solicitarAusencia(cuerpo)
+        setText('ausenciasDetalle', resultado?.message ?? 'Ausencia solicitada')
+        evento.currentTarget.reset()
+        limpiarCamposAusencia()
+        ocultarAlertaAusencia()
+        cerrarModalAusencia()
+        await recargarAusencias()
+    } catch (error) {
+        console.error('Error al solicitar la ausencia:', error)
+
+        const detalles = Array.isArray(error.data?.errors) ? error.data.errors : []
+        for (const detalle of detalles) marcarCampoAusencia(detalle.path, detalle.message)
+        const mensaje = detalles.length
+            ? detalles.map((detalle) => `${detalle.path}: ${detalle.message}`).join(' ')
+            : error.message ?? 'No se pudo solicitar la ausencia'
+        mostrarAlertaAusencia(mensaje, 'danger')
+        setText('ausenciasDetalle', 'No se pudo solicitar la ausencia')
+    } finally {
+        if (boton) boton.disabled = false
+    }
+}
+
 async function cargarIndicadores(salarioActual) {
     const nombres = [
         'rotación', 'ausentismo', 'contratos por vencer', 'decisiones',
-        'actividad', 'hitos', 'nómina', 'expedientes', 'permisos'
+        'actividad', 'hitos', 'nómina', 'expedientes', 'permisos', 'ausencias'
     ]
 
     const peticiones = await Promise.allSettled([
@@ -644,7 +961,8 @@ async function cargarIndicadores(salarioActual) {
         window.HORIZON_API.getHitos(),
         window.HORIZON_API.getNomina(),
         window.HORIZON_API.getExpedientes(),
-        window.HORIZON_API.getPermisos()
+        window.HORIZON_API.getPermisos(),
+        window.HORIZON_API.getAusencias()
     ])
 
     peticiones.forEach((peticion, indice) => {
@@ -661,8 +979,12 @@ async function cargarIndicadores(salarioActual) {
     datosDecisiones = valor(3)
     puedeGestionarRRHH = ['RRHH', 'ADMIN'].includes(peticiones[8].value?.nivel)
     configurarAccionesDecisiones()
+    configurarAccionesAusencias()
     configurarHito()
+    configurarSolicitudAusencia()
     renderizarDecisiones(datosDecisiones, puedeGestionarRRHH)
+    datosAusencias = valor(9)
+    renderizarAusencias(datosAusencias, puedeGestionarRRHH)
 
     renderizarActividad(valor(4))
     renderizarHito(peticiones[5].status === 'fulfilled' ? peticiones[5].value : undefined)
