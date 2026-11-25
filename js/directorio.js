@@ -11,6 +11,8 @@ let totalEmpleados = 0
 let totalPaginas = 1
 let temporizadorBusqueda
 let solicitudActual = 0
+let puedeExportar = false
+let exportacionConfigurada = false
 
 function setText(id, texto) {
     const elemento = document.getElementById(id)
@@ -396,14 +398,76 @@ async function cargarCatalogos() {
     }
 }
 
+async function descargarEmpleados() {
+    const boton = document.getElementById('btnExportar')
+    if (boton?.disabled) return
+
+    if (boton) boton.disabled = true
+    setText('estadoExportacion', 'Generando CSV...')
+
+    try {
+        const filtrosExportacion = {
+            q: document.getElementById('buscarEmpleados')?.value ?? '',
+            department: filtros.department,
+            sede: filtros.sede,
+            contract_type: filtros.contract_type
+        }
+        const { blob, nombre } = await window.HORIZON_API.exportarEmpleados(filtrosExportacion)
+
+        const url = URL.createObjectURL(blob)
+        const enlace = document.createElement('a')
+        enlace.href = url
+        enlace.download = nombre
+        document.body.append(enlace)
+        enlace.click()
+        enlace.remove()
+        // Se libera en el siguiente tick para que el navegador alcance a iniciar
+        // la descarga antes de invalidar la URL temporal.
+        setTimeout(() => URL.revokeObjectURL(url), 0)
+
+        setText('estadoExportacion', `CSV descargado: ${nombre}`)
+    } catch (error) {
+        console.error('Error al exportar los empleados:', error)
+        if (error.status === 403) {
+            puedeExportar = false
+            if (boton) boton.hidden = true
+            setText('estadoExportacion', 'Sin permisos para exportar')
+        } else {
+            setText('estadoExportacion', error.message ?? 'No se pudo exportar el directorio')
+        }
+    } finally {
+        if (boton) boton.disabled = false
+    }
+}
+
+function configurarExportacion() {
+    const boton = document.getElementById('btnExportar')
+    if (!boton) return
+
+    boton.hidden = !puedeExportar
+    if (exportacionConfigurada) return
+
+    boton.addEventListener('click', descargarEmpleados)
+    exportacionConfigurada = true
+}
+
 async function cargarIndicadores() {
-    const [resumen, evolucion, porSede, porVencer, expedientes] = await Promise.allSettled([
+    const nombres = ['resumen', 'evolución', 'sedes', 'contratos por vencer', 'expedientes', 'permisos']
+    const peticiones = await Promise.allSettled([
         window.HORIZON_API.getResumen(),
         window.HORIZON_API.getEvolucionContrataciones(),
         window.HORIZON_API.getEmpleadosBySede(),
         window.HORIZON_API.getContratosPorVencer(),
-        window.HORIZON_API.getExpedientes()
+        window.HORIZON_API.getExpedientes(),
+        window.HORIZON_API.getPermisos()
     ])
+    const [resumen, evolucion, porSede, porVencer, expedientes, permisos] = peticiones
+
+    peticiones.forEach((peticion, indice) => {
+        if (peticion.status === 'rejected') {
+            console.error(`Error al cargar ${nombres[indice]}:`, peticion.reason)
+        }
+    })
 
     if (resumen.status === 'fulfilled') {
         const datos = resumen.value
@@ -456,6 +520,9 @@ async function cargarIndicadores() {
     } else {
         console.error('Error al cargar los expedientes:', expedientes.reason)
     }
+
+    puedeExportar = ['RRHH', 'ADMIN'].includes(permisos.value?.nivel)
+    configurarExportacion()
 }
 
 function crearDetalle(empleado) {

@@ -108,7 +108,8 @@ function normalizarEvolucionSemana(evolucion) {
 }
 
 async function request(ruta, opciones = {}) {
-    const { body, redirigirSi401 = true, ...init } = opciones
+    const { body, redirigirSi401 = true, formato = 'json', ...init } = opciones
+    const binario = formato === 'blob' || formato === 'response'
 
     const respuesta = await fetch(`${API_BASE}${ruta}`, {
         credentials: 'include',
@@ -121,15 +122,20 @@ async function request(ruta, opciones = {}) {
             })
     })
 
-    const data = await respuesta.json().catch(() => null)
+    // Las respuestas binarias no se parsean: solo se lee el JSON cuando la
+    // petición falla, para conservar el mensaje y los errores de validación.
+    const data = binario ? null : await respuesta.json().catch(() => null)
 
     if (!respuesta.ok) {
+        const cuerpoError = binario ? await respuesta.json().catch(() => null) : data
         if (respuesta.status === 401 && redirigirSi401) {
             window.location.replace('./login.html')
         }
-        throw new ApiError(mensajeDeError(data, respuesta.status), respuesta.status, data)
+        throw new ApiError(mensajeDeError(cuerpoError, respuesta.status), respuesta.status, cuerpoError)
     }
 
+    if (formato === 'response') return respuesta
+    if (formato === 'blob') return respuesta.blob()
     return data
 }
 
@@ -224,5 +230,25 @@ window.HORIZON_API = Object.freeze({
     crearHito: (hito) => request('/api/hitos', {
         method: 'POST',
         body: hito
-    })
+    }),
+
+    // El CSV se descarga en el cliente. Los filtros activos del directorio se
+    // envían al backend para exportar exactamente lo que se está viendo.
+    exportarEmpleados: async (filtros = {}) => {
+        const parametros = new URLSearchParams()
+        for (const [clave, valor] of Object.entries(filtros)) {
+            if (valor) parametros.set(clave, String(valor))
+        }
+        const sufijo = parametros.size ? `?${parametros}` : ''
+        const respuesta = await request(`/api/exportar/empleados${sufijo}`, {
+            formato: 'response'
+        })
+        const nombreRemoto = /filename="?([^";]+)"?/i.exec(
+            respuesta.headers.get('content-disposition') ?? ''
+        )?.[1]
+        return {
+            blob: await respuesta.blob(),
+            nombre: nombreRemoto ?? `empleados-${new Date().toISOString().slice(0, 10)}.csv`
+        }
+    }
 })
