@@ -214,6 +214,9 @@ window.HORIZON_API = Object.freeze({
     getActividad: () => request('/api/actividad'),
     getHitos: () => request('/api/hitos'),
     getNomina: () => request('/api/nomina'),
+    cerrarNomina: (period) => request(`/api/nomina/${encodeURIComponent(period)}/cerrar`, {
+        method: 'POST'
+    }),
     getExpedientes: () => request('/api/expedientes'),
 
     getAusencias: () => request('/api/ausencias'),

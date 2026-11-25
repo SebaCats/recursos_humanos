@@ -33,9 +33,10 @@ Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS
 - Plantilla activa y cobertura desde `GET /api/resumen`; nómina desde `GET /api/totalSalario`.
 - Gráfica de altas y plantilla activa con Chart.js: en la vista mensual las altas son barras y la plantilla acumulada una línea; en la semanal se muestran solo las altas por día. El botón “Ver semana actual” / “Ver 12 meses” alterna entre `GET /api/evolucionContratacionesSemanal` (7 días, lunes a domingo) y `GET /api/evolucionContrataciones` (12 meses). El cliente completa los periodos sin altas con 0.
 - Distribución por departamento, sedes, roles y tipos de contrato desde `/api/*`.
-- Nómina por departamento construida con `GET /api/salarioByDepartamento`; el coste previsto usa `GET /api/nomina` y cae al salario vigente si no hay cierre.
+- Nómina por departamento construida con `GET /api/salarioByDepartamento`; el coste previsto usa `GET /api/nomina` y cae al salario vigente si no hay periodo pendiente. El botón “Cerrar periodo” envía `POST /api/nomina/:period/cerrar` para RRHH/ADMIN y recarga el KPI y la actividad.
 - Rotación, ausentismo, contratos por vencer, bandeja de decisiones, actividad reciente y próximo hito alimentados por `/api/rotacion`, `/api/ausentismo`, `/api/contratosPorVencer`, `/api/decisiones`, `/api/actividad` y `/api/hitos`. La bandeja permite aprobar o rechazar solicitudes con `POST /api/decisiones/:id/aprobar|rechazar`; las acciones aparecen solo si `GET /api/permisos` devuelve nivel RRHH o ADMIN. Tras resolver se recargan la bandeja y la actividad.
 - El botón “Programar hito” abre un formulario que envía `POST /api/hitos` (título, fecha, descripción y responsable opcionales) y recarga el próximo hito y la actividad. También queda oculto para quien no tenga nivel RRHH/ADMIN.
+- El cierre de nómina se confirma en una modal con el periodo y el total del `GET /api/nomina`. Solo aparece para RRHH/ADMIN mientras haya un periodo `PENDIENTE`; tras cerrar se consultan de nuevo `GET /api/nomina` y `GET /api/actividad`.
 
 **Directorio** (`directorio.html`):
 - Tarjetas de indicadores alimentadas por `/api/resumen`, `/api/evolucionContrataciones`, `/api/empleadosBySede`, `/api/contratosPorVencer` y `/api/expedientes`.
@@ -174,7 +175,8 @@ GET /api/contratosPorVencer          -> { cantidad, lista: [{ nombre, departamen
 GET /api/decisiones                  -> { cantidad, lista: [{ id, type, title, empleado, responsable, vence, status }] }
 GET /api/actividad                   -> [{ id, actor, action, entity, entity_id, fecha }]
 GET /api/hitos                       -> { title, description, fecha, owner } | null
-GET /api/nomina                      -> { period, total, status }
+GET /api/nomina                      -> { period, total, status } (periodo pendiente, o `null` si no hay)
+POST /api/nomina/:period/cerrar      -> { message, nomina } con `{ period, total, status: 'CERRADA', closed_at }`
 GET /api/expedientes                 -> { porcentaje, completos, total, pendientes }
 GET /employee/getAll                 -> { "employees": [...] }
 GET /employee/getPage?page=1&limit=10&q=&department=&sede=&contract_type=
@@ -192,7 +194,7 @@ Si alguna petición falla se registra en consola; las secciones afectadas muestr
 | Elemento | ID | Archivo que lo actualiza |
 | -------- | -- | ------------------------ |
 | Plantilla activa y detalle | `plantillaActiva`, `plantillaDetalle` | `js/resumen.js` |
-| Total de nómina | `totalNomina`, `nominaDetalle` | `js/resumen.js` |
+| Total de nómina y cierre | `totalNomina`, `nominaDetalle`, `btnCerrarNomina`, `modalCerrarNomina` | `js/resumen.js` |
 | Rotación y ausentismo | `rotacionValor`, `rotacionDetalle`, `ausentismoValor`, `ausentismoDetalle` | `js/resumen.js` |
 | Barras por departamento | `progressDiv` | `js/resumen.js` |
 | Nómina por departamento | `nominaPorDepartamento` | `js/resumen.js` |
@@ -231,6 +233,7 @@ El frontend espera que el backend esté ejecutándose en `http://localhost:3000`
 | `GET` | `/employee/getById/:id` | `{ "employee": {...} }`. Alimenta el modal de detalle. |
 | `POST` | `/employee/create` | Alta de empleado y contrato. Si no se envía `password`, la respuesta incluye `result.temporaryPassword`. |
 | `POST` | `/employee/change-password` | Recibe `{ "currentPassword": "...", "newPassword": "..." }`. Verifica la contraseña actual de la sesión, guarda el hash de la nueva y responde `{ "message": "Contraseña actualizada" }`. `400` si la actual es incorrecta o la nueva no es válida. |
+| `POST` | `/api/nomina/:period/cerrar` | Cierra el periodo `YYYY-MM` devuelto por `GET /api/nomina`; RRHH/ADMIN. `404` si no existe, `409` si ya estaba cerrado. |
 
 Todas las rutas anteriores, salvo `/login` y `/logout`, requieren sesión válida. `vercel.json` las proxya al backend con una sola regla y les aplica `Cache-Control: no-store`.
 
@@ -250,7 +253,7 @@ Al ser un sitio estático, se puede publicar directamente:
 
 ## Limitaciones conocidas
 
-- **Datos:** el resumen, la gráfica de altas, el directorio, los catálogos, el alta, las tarjetas de rotación/ausentismo, la bandeja de decisiones, las ausencias, los hitos y la actividad reciente usan datos reales. Sigue sin registrarse bajas, por lo que la rotación se calcula con los datos disponibles.
+- **Datos:** el resumen, la gráfica de altas, el directorio, los catálogos, el alta, las tarjetas de rotación/ausentismo, la bandeja de decisiones, las ausencias, el cierre de nómina, los hitos y la actividad reciente usan datos reales. Sigue sin registrarse bajas, por lo que la rotación se calcula con los datos disponibles.
 - **Directorio:** la paginación, los filtros de departamento, sede y contrato, y la exportación CSV funcionan; el filtro de estado y "Columnas" siguen siendo elementos visuales.
 - **Contratos:** la BD no tiene fecha de vencimiento, por lo que la tarjeta "Contratos próximos a vencer" no se calcula desde la API.
 - **API:** requiere que el backend esté disponible en `http://localhost:3000` (o la URL configurada) con CORS y credenciales habilitados.

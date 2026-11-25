@@ -11,7 +11,7 @@
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="css/styles.css?v=20261128">
     <script src="js/config.js?v=20261123"></script>
-    <script src="js/api.js?v=20261130"></script>
+    <script src="js/api.js?v=20261201"></script>
     <script src="js/auth.js?v=20261123"></script>
 </head>
 
@@ -118,6 +118,10 @@
                             <section class="text-body-tertiary">Coste de nómina previsto</section>
                             <h1 id="totalNomina">—</h1>
                             <small id="nominaDetalle" class="text-success">Cargando nómina...</small>
+                            <button type="button" id="btnCerrarNomina" class="btn btn-sm btn-outline-primary mt-2" hidden
+                                data-bs-toggle="modal" data-bs-target="#modalCerrarNomina">
+                                Cerrar periodo
+                            </button>
                         </article>
                     </div>
                 </div>
@@ -351,6 +355,30 @@
         </div>
     </div>
 
+    <!-- Modal Cerrar Nómina -->
+    <div class="modal fade" id="modalCerrarNomina" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="tituloCerrarNomina" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tituloCerrarNomina">Cerrar nómina</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form id="formCerrarNomina" novalidate>
+                    <div class="modal-body">
+                        <div id="alertaCerrarNomina" class="alert d-none" role="alert"></div>
+                        <p class="mb-1">Periodo: <strong id="nominaPeriodo">—</strong></p>
+                        <p class="mb-0">Total del periodo: <strong id="nominaTotalCierre">—</strong></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="botonCerrarNomina">Cerrar periodo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Solicitar Ausencia -->
     <div class="modal fade" id="modalSolicitarAusencia" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
         aria-labelledby="tituloSolicitarAusencia" aria-hidden="true">
@@ -456,7 +484,7 @@
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/graficas.js?v=20261123"></script>
-    <script src="js/resumen.js?v=20261130"></script>
+    <script src="js/resumen.js?v=20261201"></script>
     <script src="js/password.js?v=20261123"></script>
     <script src="js/busqueda.js?v=20261128"></script>
 </body>

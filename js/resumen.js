@@ -10,6 +10,8 @@ let periodoEvolucion = 'mes'
 let datosResumen = null
 let datosDecisiones = null
 let datosAusencias = null
+let datosNomina = null
+let salarioVigente = 0
 let puedeGestionarRRHH = false
 let accionesDecisionesConfiguradas = false
 let formularioHitoConfigurado = false
@@ -289,18 +291,145 @@ function renderizarAusentismo(datos) {
     )
 }
 
-function renderizarNominaDetalle(datos, salarioActual) {
-    if (datos?.period) {
-        actualizarTotalSalario(datos.total)
+function renderizarNominaDetalle(datos, salarioActual = salarioVigente) {
+    datosNomina = datos?.period ? datos : null
+
+    if (datosNomina) {
+        actualizarTotalSalario(datosNomina.total)
         setText(
             'nominaDetalle',
-            `${datos.period} · ${datos.status === 'PENDIENTE' ? 'pendiente de cierre' : 'cerrada'}`
+            `${datosNomina.period} · ${datosNomina.status === 'PENDIENTE' ? 'pendiente de cierre' : 'cerrada'}`
         )
+        actualizarBotonCerrarNomina()
         return
     }
 
     actualizarTotalSalario(salarioActual)
-    setText('nominaDetalle', 'Sin cierre registrado · salario vigente')
+    const sinPendientes = datos && typeof datos === 'object' && 'status' in datos
+    setText(
+        'nominaDetalle',
+        sinPendientes ? 'Sin periodos pendientes · salario vigente' : 'Sin cierre registrado · salario vigente'
+    )
+    actualizarBotonCerrarNomina()
+}
+
+function actualizarBotonCerrarNomina() {
+    const boton = document.getElementById('btnCerrarNomina')
+    if (!boton) return
+
+    const pendiente = datosNomina?.status === 'PENDIENTE' && /^\d{4}-\d{2}$/.test(datosNomina?.period ?? '')
+    boton.hidden = !puedeGestionarRRHH || !pendiente
+}
+
+function mostrarAlertaCerrarNomina(mensaje, tipo) {
+    const alerta = document.getElementById('alertaCerrarNomina')
+    if (!alerta) return
+    alerta.className = `alert alert-${tipo}`
+    alerta.textContent = mensaje
+    alerta.classList.remove('d-none')
+}
+
+function ocultarAlertaCerrarNomina() {
+    const alerta = document.getElementById('alertaCerrarNomina')
+    if (!alerta) return
+    alerta.className = 'alert d-none'
+    alerta.textContent = ''
+}
+
+function cerrarModalNomina() {
+    const modal = document.getElementById('modalCerrarNomina')
+    if (modal && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        bootstrap.Modal.getInstance(modal)?.hide()
+    }
+}
+
+function rellenarModalNomina() {
+    setText('nominaPeriodo', datosNomina?.period ?? '—')
+    setText('nominaTotalCierre', `$${formatoNumero.format(Number(datosNomina?.total ?? 0))}`)
+    ocultarAlertaCerrarNomina()
+}
+
+function configurarCierreNomina() {
+    const boton = document.getElementById('btnCerrarNomina')
+    if (boton && boton.dataset.configurado !== 'true') {
+        boton.addEventListener('click', rellenarModalNomina)
+        boton.dataset.configurado = 'true'
+    }
+
+    const formulario = document.getElementById('formCerrarNomina')
+    if (!formulario || formulario.dataset.configurado === 'true') return
+    formulario.addEventListener('submit', cerrarPeriodoNomina)
+    formulario.dataset.configurado = 'true'
+}
+
+// Cerrar recalcula el total en el backend: se vuelve a consultar la nómina y la
+// actividad para que el KPI y el registro de cambios queden alineados.
+async function recargarNomina() {
+    const nombres = ['nómina', 'actividad']
+    const peticiones = await Promise.allSettled([
+        window.HORIZON_API.getNomina(),
+        window.HORIZON_API.getActividad()
+    ])
+
+    peticiones.forEach((peticion, indice) => {
+        if (peticion.status === 'rejected') {
+            console.error(`Error al recargar ${nombres[indice]}:`, peticion.reason)
+        }
+    })
+
+    if (peticiones[0].status === 'fulfilled') renderizarNominaDetalle(peticiones[0].value)
+    if (peticiones[1].status === 'fulfilled') renderizarActividad(peticiones[1].value)
+}
+
+async function cerrarPeriodoNomina(evento) {
+    evento.preventDefault()
+
+    const periodo = datosNomina?.period
+    if (!puedeGestionarRRHH || datosNomina?.status !== 'PENDIENTE' || !periodo) {
+        mostrarAlertaCerrarNomina('No hay un periodo pendiente que se pueda cerrar', 'warning')
+        return
+    }
+
+    ocultarAlertaCerrarNomina()
+    const boton = document.getElementById('botonCerrarNomina')
+    if (boton) boton.disabled = true
+    setText('nominaDetalle', `Cerrando nómina de ${periodo}...`)
+
+    try {
+        const resultado = await window.HORIZON_API.cerrarNomina(periodo)
+        cerrarModalNomina()
+        await recargarNomina()
+        setText(
+            'nominaDetalle',
+            datosNomina?.period
+                ? `${resultado?.message ?? 'Nómina cerrada'} · ${datosNomina.period} pendiente`
+                : `${periodo} cerrado · salario vigente`
+        )
+    } catch (error) {
+        console.error('Error al cerrar la nómina:', error)
+
+        if (error.status === 403) {
+            puedeGestionarRRHH = false
+            actualizarBotonCerrarNomina()
+            configurarHito()
+            renderizarDecisiones(datosDecisiones, false)
+            renderizarAusencias(datosAusencias, false)
+            setText('nominaDetalle', 'Sin permisos para cerrar la nómina')
+            return
+        }
+
+        if (error.status === 409) {
+            cerrarModalNomina()
+            await recargarNomina()
+            setText('nominaDetalle', 'El periodo ya estaba cerrado')
+            return
+        }
+
+        mostrarAlertaCerrarNomina(error.message ?? 'No se pudo cerrar la nómina', 'danger')
+        setText('nominaDetalle', 'No se pudo cerrar la nómina')
+    } finally {
+        if (boton) boton.disabled = false
+    }
 }
 
 function botonDecision(id, accion, etiqueta, clase) {
@@ -947,6 +1076,7 @@ async function registrarAusencia(evento) {
 }
 
 async function cargarIndicadores(salarioActual) {
+    salarioVigente = Number(salarioActual ?? 0)
     const nombres = [
         'rotación', 'ausentismo', 'contratos por vencer', 'decisiones',
         'actividad', 'hitos', 'nómina', 'expedientes', 'permisos', 'ausencias'
@@ -982,6 +1112,7 @@ async function cargarIndicadores(salarioActual) {
     configurarAccionesAusencias()
     configurarHito()
     configurarSolicitudAusencia()
+    configurarCierreNomina()
     renderizarDecisiones(datosDecisiones, puedeGestionarRRHH)
     datosAusencias = valor(9)
     renderizarAusencias(datosAusencias, puedeGestionarRRHH)
