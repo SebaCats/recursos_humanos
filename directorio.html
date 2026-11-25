@@ -10,7 +10,7 @@
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="css/styles.css?v=20261129">
     <script src="js/config.js?v=20261129"></script>
-    <script src="js/api.js?v=20261202"></script>
+    <script src="js/api.js?v=20261203"></script>
     <script src="js/auth.js?v=20261129"></script>
 </head>
 
@@ -209,15 +209,16 @@
                         <li>
                             <div class="align-content-center" id="directorioEmpleadosCount">Cargando empleados...</div>
                         </li>
-                        <li>
-                            <label for="formFile" class="btn btn-primary">Subir archivo</label>
-                            <input type="file" id="formFile" hidden>
+                        <li id="grupoImportar" hidden>
+                            <label for="formFile" class="btn btn-primary">Importar CSV</label>
+                            <input type="file" id="formFile" accept=".csv,text/csv" hidden>
                         </li>
                         <li>
                             <button type="button" class="btn btn-primary" id="btnExportar" hidden>Exportar</button>
                         </li>
                         <li>
                             <small id="estadoExportacion" class="text-body-tertiary"></small>
+                            <small id="estadoImportacion" class="text-body-tertiary d-block"></small>
                         </li>
                         <!-- TODO Insertar logo pertinente -->
                         <li>
@@ -588,6 +589,30 @@
         </div>
     </div>
 
+    <!-- Modal Importar Empleados -->
+    <div class="modal fade" id="modalImportarEmpleados" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="tituloImportarEmpleados" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tituloImportarEmpleados">Importar empleados</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="alertaImportacion" class="alert d-none" role="alert"></div>
+                    <div id="resumenImportacion" class="mb-3"></div>
+                    <h2 class="h6" id="tituloVistaPrevia">Vista previa</h2>
+                    <div id="vistaPreviaImportacion" class="table-responsive"></div>
+                    <div id="resultadosImportacion" hidden></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmarImportacion">Importar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Cambiar Contraseña -->
     <div class="modal fade" id="modalCambiarContrasena" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
         aria-labelledby="tituloCambiarContrasena" aria-hidden="true">
@@ -632,7 +657,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
-    <script src="js/directorio.js?v=20261202"></script>
+    <script src="js/directorio.js?v=20261203"></script>
     <script src="js/password.js?v=20261129"></script>
     <script src="js/busqueda.js?v=20261129"></script>
 </body>

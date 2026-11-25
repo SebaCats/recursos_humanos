@@ -12,7 +12,11 @@ let totalPaginas = 1
 let temporizadorBusqueda
 let solicitudActual = 0
 let puedeRRHH = false
+let puedeAdmin = false
 let exportacionConfigurada = false
+let importacionConfigurada = false
+let filasImportacion = []
+let nombreArchivoImportacion = ''
 let accionesContratoConfiguradas = false
 let empleadoSeleccionado = null
 let empleadoSeleccionadoNombre = ''
@@ -877,7 +881,9 @@ async function cargarIndicadores() {
     }
 
     puedeRRHH = ['RRHH', 'ADMIN'].includes(permisos.value?.nivel)
+    puedeAdmin = permisos.value?.nivel === 'ADMIN'
     configurarExportacion()
+    configurarImportacion()
     configurarAccionesContrato()
 }
 
@@ -1018,6 +1024,322 @@ async function cambiarEstadoDocumento(documento, selector, idEmpleado) {
             selector.disabled = false
         }
     }
+}
+
+const COLUMNAS_IMPORTACION = {
+    nombre: 'name', name: 'name',
+    apellido: 'last_name', apellidos: 'last_name', last_name: 'last_name', lastname: 'last_name',
+    email: 'email', correo: 'email',
+    password: 'password', password_temporal: 'password',
+    puesto: 'position', position: 'position',
+    departamento: 'department', department: 'department',
+    sede: 'sede',
+    tipo_contrato: 'contract_type', tipo_de_contrato: 'contract_type',
+    contract_type: 'contract_type', contracttype: 'contract_type',
+    salario: 'salary', salary: 'salary'
+}
+
+const CAMPOS_REQUERIDOS_IMPORTACION = [
+    'name', 'last_name', 'email', 'position', 'sede', 'department', 'contract_type', 'salary'
+]
+
+function normalizarEncabezadoImportacion(texto) {
+    return String(texto)
+        .replace(/^\uFEFF/, '')
+        .toLowerCase()
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[\s-]+/g, '_')
+}
+
+function detectarDelimitadorCsv(texto) {
+    const primeraLinea = texto.split(/\r?\n/, 1)[0] ?? ''
+    let entreComillas = false
+    let puntosYComa = 0
+    let comas = 0
+
+    for (let indice = 0; indice < primeraLinea.length; indice++) {
+        const caracter = primeraLinea[indice]
+        if (caracter === '"') entreComillas = !entreComillas
+        else if (!entreComillas && caracter === ';') puntosYComa++
+        else if (!entreComillas && caracter === ',') comas++
+    }
+
+    return puntosYComa >= comas ? ';' : ','
+}
+
+// Parser mínimo para el CSV que exporta el panel: respeta comillas dobles,
+// separador `;` (o `,`), BOM UTF-8 y saltos de línea CRLF.
+function parsearCsv(texto) {
+    const contenido = String(texto).replace(/^\uFEFF/, '')
+    const delimitador = detectarDelimitadorCsv(contenido)
+    const filas = []
+    let fila = []
+    let celda = ''
+    let entreComillas = false
+
+    for (let indice = 0; indice < contenido.length; indice++) {
+        const caracter = contenido[indice]
+
+        if (caracter === '"') {
+            if (entreComillas && contenido[indice + 1] === '"') {
+                celda += '"'
+                indice++
+            } else {
+                entreComillas = !entreComillas
+            }
+        } else if (!entreComillas && caracter === delimitador) {
+            fila.push(celda)
+            celda = ''
+        } else if (!entreComillas && (caracter === '\n' || caracter === '\r')) {
+            if (caracter === '\r' && contenido[indice + 1] === '\n') indice++
+            fila.push(celda)
+            if (fila.some((valor) => valor.trim() !== '')) filas.push(fila)
+            fila = []
+            celda = ''
+        } else {
+            celda += caracter
+        }
+    }
+
+    if (celda !== '' || fila.length) {
+        fila.push(celda)
+        if (fila.some((valor) => valor.trim() !== '')) filas.push(fila)
+    }
+
+    return filas
+}
+
+function normalizarSalarioImportacion(valor) {
+    const texto = String(valor).trim()
+    if (/^\d{1,3}(\.\d{3})+$/.test(texto)) return texto.replace(/\./g, '')
+    if (/^\d+,\d{2}$/.test(texto)) return texto.replace(',', '.')
+    return texto
+}
+
+function convertirFilasImportacion(filas) {
+    if (!filas.length) throw new Error('El archivo CSV está vacío')
+
+    const cabeceras = filas[0].map(normalizarEncabezadoImportacion)
+    const indices = {}
+    cabeceras.forEach((cabecera, indice) => {
+        const campo = COLUMNAS_IMPORTACION[cabecera]
+        if (campo && indices[campo] === undefined) indices[campo] = indice
+    })
+
+    const faltantes = CAMPOS_REQUERIDOS_IMPORTACION.filter((campo) => indices[campo] === undefined)
+    if (faltantes.length) throw new Error(`Faltan columnas: ${faltantes.join(', ')}`)
+
+    const empleados = []
+    for (let indice = 1; indice < filas.length; indice++) {
+        const celdas = filas[indice]
+        const empleado = {}
+        for (const [campo, posicion] of Object.entries(indices)) {
+            const valor = (celdas[posicion] ?? '').trim()
+            if (!valor) continue
+            empleado[campo] = campo === 'salary' ? normalizarSalarioImportacion(valor) : valor
+        }
+        empleados.push(empleado)
+    }
+
+    if (!empleados.length) throw new Error('El CSV no tiene filas de empleados')
+    if (empleados.length > 100) throw new Error('Se pueden importar hasta 100 empleados a la vez')
+    return empleados
+}
+
+function construirTablaImportacion(filas, incluirPassword = false) {
+    const tabla = document.createElement('table')
+    tabla.className = 'table table-sm table-striped mb-0'
+
+    const cabecera = document.createElement('thead')
+    const filaCabecera = document.createElement('tr')
+    const titulos = incluirPassword
+        ? ['Fila', 'Correo', 'Resultado', 'Detalle']
+        : ['Nombre', 'Correo', 'Puesto', 'Salario']
+
+    for (const titulo of titulos) {
+        const columna = document.createElement('th')
+        columna.textContent = titulo
+        filaCabecera.append(columna)
+    }
+    cabecera.append(filaCabecera)
+
+    const cuerpo = document.createElement('tbody')
+    for (const fila of filas) {
+        const filaTabla = document.createElement('tr')
+        const valores = incluirPassword
+            ? [
+                String(fila.fila ?? ''),
+                fila.email ?? '—',
+                fila.ok ? 'Importado' : 'Fallido',
+                fila.ok
+                    ? (fila.temporaryPassword ? `Contraseña temporal: ${fila.temporaryPassword}` : '')
+                    : (fila.error ?? '')
+            ]
+            : [
+                [fila.name, fila.last_name].filter(Boolean).join(' '),
+                fila.email ?? '',
+                fila.position ?? '',
+                fila.salary ?? ''
+            ]
+
+        for (const valor of valores) {
+            const celda = document.createElement('td')
+            celda.textContent = valor
+            filaTabla.append(celda)
+        }
+        cuerpo.append(filaTabla)
+    }
+
+    tabla.append(cabecera, cuerpo)
+    return tabla
+}
+
+function abrirModalImportacion() {
+    const modal = document.getElementById('modalImportarEmpleados')
+    if (modal && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        bootstrap.Modal.getOrCreateInstance(modal).show()
+    }
+}
+
+async function prepararImportacion(archivo) {
+    if (!puedeAdmin || !archivo) return
+
+    ocultarAlerta('alertaImportacion')
+    setText('estadoImportacion', 'Leyendo archivo...')
+
+    try {
+        filasImportacion = convertirFilasImportacion(parsearCsv(await archivo.text()))
+        nombreArchivoImportacion = archivo.name || 'empleados.csv'
+
+        setText('resumenImportacion',
+            `${filasImportacion.length} ${filasImportacion.length === 1 ? 'empleado listo' : 'empleados listos'} para importar desde ${nombreArchivoImportacion}. Si el CSV no trae contraseña, el backend generará una temporal.`
+        )
+        const titulo = document.getElementById('tituloVistaPrevia')
+        if (titulo) titulo.hidden = false
+        const previa = document.getElementById('vistaPreviaImportacion')
+        if (previa) {
+            previa.hidden = false
+            previa.replaceChildren(construirTablaImportacion(filasImportacion.slice(0, 5)))
+        }
+        const resultados = document.getElementById('resultadosImportacion')
+        if (resultados) {
+            resultados.hidden = true
+            resultados.replaceChildren()
+        }
+        const boton = document.getElementById('btnConfirmarImportacion')
+        if (boton) {
+            boton.hidden = false
+            boton.disabled = false
+        }
+        setText('estadoImportacion', `${filasImportacion.length} filas listas para importar`)
+    } catch (error) {
+        filasImportacion = []
+        mostrarAlerta('alertaImportacion', error?.message ?? 'No se pudo leer el CSV', 'danger')
+        setText('estadoImportacion', 'No se pudo leer el CSV')
+    }
+
+    abrirModalImportacion()
+}
+
+async function recargarTrasImportacion() {
+    pagina = 1
+    const nombres = ['empleados', 'indicadores']
+    const peticiones = await Promise.allSettled([
+        cargarEmpleados(),
+        cargarIndicadores()
+    ])
+
+    peticiones.forEach((peticion, indice) => {
+        if (peticion.status === 'rejected') {
+            console.error(`Error al recargar ${nombres[indice]}:`, peticion.reason)
+        }
+    })
+}
+
+async function ejecutarImportacion() {
+    if (!puedeAdmin || !filasImportacion.length) {
+        mostrarAlerta('alertaImportacion', 'No hay filas válidas para importar', 'danger')
+        return
+    }
+
+    const boton = document.getElementById('btnConfirmarImportacion')
+    if (boton) boton.disabled = true
+    ocultarAlerta('alertaImportacion')
+    setText('estadoImportacion', `Importando ${filasImportacion.length} empleados...`)
+
+    try {
+        const resultado = await window.HORIZON_API.importarEmpleados(filasImportacion)
+        const resultados = Array.isArray(resultado?.resultados) ? resultado.resultados : []
+        const insertados = Number(resultado?.insertados ?? 0)
+        const fallidos = Number(resultado?.fallidos ?? 0)
+
+        setText('resumenImportacion',
+            `${insertados} ${insertados === 1 ? 'empleado importado' : 'empleados importados'}, ${fallidos} ${fallidos === 1 ? 'fallido' : 'fallidos'} de ${resultado?.total ?? filasImportacion.length} filas.`
+        )
+        const titulo = document.getElementById('tituloVistaPrevia')
+        if (titulo) titulo.hidden = true
+        const previa = document.getElementById('vistaPreviaImportacion')
+        if (previa) previa.hidden = true
+
+        const destino = document.getElementById('resultadosImportacion')
+        if (destino) {
+            const nota = document.createElement('p')
+            nota.className = 'small text-body-tertiary'
+            nota.textContent = 'Las contraseñas temporales solo se muestran en esta respuesta: cópialas ahora.'
+            destino.hidden = false
+            destino.replaceChildren(nota, construirTablaImportacion(resultados, true))
+        }
+        if (boton) boton.hidden = true
+        setText('estadoImportacion', `Importación finalizada: ${insertados} importados, ${fallidos} fallidos`)
+
+        await recargarTrasImportacion()
+    } catch (error) {
+        console.error('Error al importar empleados:', error)
+
+        if (error.status === 403) {
+            puedeAdmin = false
+            configurarImportacion()
+            mostrarAlerta('alertaImportacion', 'Sin permisos para importar empleados', 'danger')
+            setText('estadoImportacion', 'Sin permisos para importar')
+            return
+        }
+        if (error.status === 401) return
+
+        const mensaje = erroresDeValidacion(error, {}, 'No se pudo importar el CSV')
+        mostrarAlerta('alertaImportacion', mensaje, 'danger')
+        setText('estadoImportacion', 'No se pudo importar el CSV')
+    } finally {
+        if (boton) boton.disabled = false
+    }
+}
+
+function configurarImportacion() {
+    const grupo = document.getElementById('grupoImportar')
+    if (grupo) grupo.hidden = !puedeAdmin
+
+    const archivo = document.getElementById('formFile')
+    if (archivo) {
+        archivo.hidden = !puedeAdmin
+        if (archivo.dataset.configurado !== 'true') {
+            archivo.addEventListener('change', async (evento) => {
+                const seleccionado = evento.target?.files?.[0]
+                if (!seleccionado) return
+                await prepararImportacion(seleccionado)
+                evento.target.value = ''
+            })
+            archivo.dataset.configurado = 'true'
+        }
+    }
+
+    const boton = document.getElementById('btnConfirmarImportacion')
+    if (boton && boton.dataset.configurado !== 'true') {
+        boton.addEventListener('click', ejecutarImportacion)
+        boton.dataset.configurado = 'true'
+    }
+
+    importacionConfigurada = true
 }
 
 async function cargarDocumentosEmpleado(idEmpleado) {

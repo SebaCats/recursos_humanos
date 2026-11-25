@@ -195,6 +195,13 @@ window.HORIZON_API = Object.freeze({
         body: contrato
     }),
 
+    // La importación masiva recibe las filas ya parseadas: el backend valida
+    // cada una por separado y devuelve un resultado por fila.
+    importarEmpleados: (empleados) => request('/api/importar/empleados', {
+        method: 'POST',
+        body: { empleados }
+    }),
+
     // Catálogos: una llamada agrupada para formularios y filtros. Las rutas
     // individuales quedan disponibles para cuando se necesite solo una lista.
     getCatalogos: () => request('/api/catalogos'),
