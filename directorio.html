@@ -8,16 +8,17 @@
     <title>RR.HH. · Directorio</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="css/styles.css?v=20261204">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/styles.css?v=20261125-ux2">
     <script src="js/config.js?v=20261129"></script>
     <script src="js/api.js?v=20261206"></script>
     <script src="js/auth.js?v=20261206"></script>
 </head>
 
-<body class="d-flex flex-row bg-gray">
+<body class="horizon-app d-flex flex-row bg-gray">
 
     <!-- Barra lateral -->
-    <aside id="menuLateral" class="offcanvas-lg offcanvas-start d-flex flex-column vh-100 p-3 border-end bg-white shadow-r" style="min-width: 250px;" tabindex="-1">
+    <aside id="menuLateral" class="horizon-sidebar offcanvas-lg offcanvas-start d-flex flex-column vh-100 p-3 border-end bg-white shadow-r" tabindex="-1">
         <!-- Sección usuario -->
         <section class="d-flex align-items-center gap-2 mb-4 pb-3 border-bottom">
             <div id="avatarUsuario"
@@ -55,25 +56,24 @@
         </div>
     </aside>
 
-    <button class="btn btn-outline-secondary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuLateral" aria-controls="menuLateral">
+    <button class="horizon-menu-toggle btn btn-outline-secondary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuLateral" aria-controls="menuLateral" aria-label="Abrir menú de navegación">
         <i class="bi bi-list"></i>
     </button>
 
     <!-- Área de contenido principal -->
-    <div class="flex-grow-1 d-flex flex-column overflow-auto vh-100">
+    <div class="horizon-workspace flex-grow-1 d-flex flex-column overflow-auto vh-100">
         <!-- Header  -->
         <header
-            class="sticky-top z-3 d-flex align-items-center justify-content-between p-3 mx-4 mt-0 rounded border-bottom shadow-b bg-white">
-            <h5 class="text-body-tertiary d-flex m-0">Horizon ><div class="text-black mx-1">Recursos humanos</div>
-            </h5>
+            class="horizon-header sticky-top z-3 d-flex align-items-center justify-content-between p-3 mx-4 mt-3 rounded border-bottom shadow-b bg-white">
+            <div class="horizon-breadcrumb" aria-label="Ubicación actual"><span>Horizon</span><span aria-hidden="true">/</span><strong>Recursos humanos</strong></div>
             <div class="position-relative flex-shrink-0">
                 <div class="d-flex align-items-center">
                     <input id="buscarEmpresa"
-                        class="form-control me-2 search-icon bg-gray border-0 d-none d-sm-block" type="search"
-                        placeholder="Buscar en mi empresa..." style="width: 250px;" aria-label="Buscar en mi empresa"
+                        class="form-control me-2 search-icon bg-gray border-0 d-none d-sm-block horizon-global-search" type="search"
+                        placeholder="Buscar en mi empresa..."  aria-label="Buscar en mi empresa"
                         aria-controls="resultadosBusqueda" aria-expanded="false" autocomplete="off">
                     <button id="btnBuscarEmpresaMovil" class="btn search-icon d-sm-none" type="button"
-                        aria-label="Mostrar buscador">
+                        aria-label="Mostrar buscador" aria-expanded="false">
                         <i class="bi bi-search"></i>
                     </button>
                 </div>
@@ -83,7 +83,7 @@
         </header>
 
         <!-- Contenido principal (antes pages/directorio.ejs) -->
-        <main class="flex-grow-1 px-4">
+        <main class="horizon-main flex-grow-1 px-4">
             <!-- Titulo y Boton -->
             <div class="container-fluid p-0 mt-3">
                 <div class="d-flex justify-content-between align-items-center">
@@ -92,8 +92,8 @@
                         <p class="text-body-tertiary">El expediente de cada persona, conectado con el resto de tu ERP.</p>
                         <div id="alertaSesion" class="alert alert-warning d-none" role="alert" data-permisos-insuficientes></div>
                     </div>
-                    <a class="btn btn-primary text-nowrap flex-wrap gap-2" role="button" data-bs-toggle="modal"
-                        data-bs-target="#formularioEstatico">+ Añadir empleado</a>
+                    <button type="button" class="btn btn-primary text-nowrap flex-wrap gap-2" data-bs-toggle="modal"
+                        data-bs-target="#formularioEstatico">+ Añadir empleado</button>
                 </div>
             </div>
 
@@ -104,7 +104,7 @@
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Personas activas</section>
-                            <h1 id="directorioPersonasActivas">—</h1>
+                            <p class="h2 fw-semibold mb-1" id="directorioPersonasActivas">—</p>
                             <small id="directorioCobertura" class="text-success">Cargando cobertura...</small>
                         </article>
                     </div>
@@ -112,7 +112,7 @@
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Incorporaciones este mes</section>
-                            <h1 id="directorioIncorporaciones">—</h1>
+                            <p class="h2 fw-semibold mb-1" id="directorioIncorporaciones">—</p>
                             <small class="text-success">Altas de contrato en los últimos 12 meses</small>
                         </article>
                     </div>
@@ -120,7 +120,7 @@
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Contratos próximos a vencer</section>
-                            <h1 id="directorioContratosVencer">—</h1>
+                            <p class="h2 fw-semibold mb-1" id="directorioContratosVencer">—</p>
                             <small id="directorioContratosDetalle" class="text-success">Cargando...</small>
                         </article>
                     </div>
@@ -128,7 +128,7 @@
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Expedientes completos</section>
-                            <h1 id="directorioExpedientesCompletos">—</h1>
+                            <p class="h2 fw-semibold mb-1" id="directorioExpedientesCompletos">—</p>
                             <small id="directorioExpedientesDetalle" class="text-success">Cargando...</small>
                         </article>
                     </div>
@@ -138,27 +138,20 @@
             <!-- Dash board-->
             <div class="card py-3 my-3 shadow-b">
                 <div class="container-fluid ">
-                    <!-- Mini NavBar Dash Board-->
-                    <ul class="d-flex list-unstyled flex-wrap gap-3">
-                        <li>
-                            <a class="text-decoration-none text-reset" href="#">Todos los empleados -
-                                <span id="navTotalEmpleados">—</span></a>
-                        </li>
-                        <li>
-                            <a class="text-decoration-none text-reset" href="#">En incorporación - 2</a>
-                        </li>
-                        <li>
-                            <a class="text-decoration-none text-reset" href="#">Archivados - 12</a>
-                        </li>
-                    </ul>
-                    <hr>
+                    <!-- Resumen del conjunto; los filtros disponibles se encuentran debajo. -->
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                        <div>
+                            <h2 class="h6 fw-semibold mb-1">Todos los empleados</h2>
+                            <p class="small text-body-secondary mb-0">Consulta y filtra el personal registrado.</p>
+                        </div>
+                        <span class="small text-body-secondary"><span id="navTotalEmpleados">—</span> registros</span>
+                    </div>
                     <!-- Primera Linea de elementos Dash Board-->
                     <ul class="d-flex gap-4 list-unstyled flex-wrap gap-3">
                         <li>
-                            <input class="form-control bg-gray d-none d-sm-block" type="search" id="buscarEmpleados"
-                                placeholder="Nombre, ID o correo electrónico" aria-label="Buscar empleados"
-                                style="width: 350px; max-width: 100%;">
-                            <button class="btn search-icon d-sm-none" type="button" aria-label="Buscar">
+                            <input class="form-control bg-gray d-none d-sm-block directory-search" type="search" id="buscarEmpleados"
+                                placeholder="Nombre, ID o correo electrónico" aria-label="Buscar empleados">
+                            <button id="btnBuscarEmpleadosMovil" class="btn search-icon d-sm-none" type="button" aria-label="Mostrar búsqueda de empleados" aria-expanded="false">
                                 <i class="bi bi-search"></i>
                             </button>
                         </li>
@@ -197,19 +190,6 @@
                                 </ul>
                             </div>
                         </li>
-                        <li>
-                            <div class="dropdown">
-                                <button class="btn btn-light dropdown-toggle bg-gray" type="button"
-                                    id="dropdownMenuButton3" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Estado
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton3">
-                                    <li><button type="button" class="dropdown-item">Activo</button></li>
-                                    <li><button type="button" class="dropdown-item">En incorporación</button></li>
-                                    <li><button type="button" class="dropdown-item">En ausencia</button></li>
-                                </ul>
-                            </div>
-                        </li>
                     </ul>
                     <!-- Segunda Linea de elementos Dash Board-->
                     <ul class="d-flex gap-4 list-unstyled align-items-center flex-wrap gap-3">
@@ -226,10 +206,6 @@
                         <li>
                             <small id="estadoExportacion" class="text-body-tertiary"></small>
                             <small id="estadoImportacion" class="text-body-tertiary d-block"></small>
-                        </li>
-                        <!-- TODO Insertar logo pertinente -->
-                        <li>
-                            <a class="btn btn-primary" href="#" type="button">Columnas</a>
                         </li>
                     </ul>
                     <!-- Tabla -->
@@ -284,7 +260,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h1 class="modal-title fs-5" id="staticBackdropLabel">Registro de Empleado</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <form id="formularioRegistro">
                     <div class="modal-body">
@@ -352,7 +328,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h1 class="modal-title fs-5" id="detalleEmpleadoTitulo">Empleado</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body" id="detalleEmpleadoContenido">Cargando...</div>
                 <div class="modal-body border-top pt-3" id="detalleExpedienteContenido" hidden>

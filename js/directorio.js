@@ -1488,6 +1488,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 250)
     })
 
+    const buscadorEmpleados = document.getElementById('buscarEmpleados')
+    const botonBuscarEmpleados = document.getElementById('btnBuscarEmpleadosMovil')
+    botonBuscarEmpleados?.addEventListener('click', () => {
+        const abierto = buscadorEmpleados?.classList.toggle('mobile-search-open') ?? false
+        botonBuscarEmpleados.setAttribute('aria-expanded', String(abierto))
+        if (abierto) buscadorEmpleados?.focus()
+    })
+
     document.getElementById('paginacionEmpleados')?.addEventListener('click', (evento) => {
         const boton = evento.target.closest('button[data-pagina]')
         if (!boton || boton.disabled) return
