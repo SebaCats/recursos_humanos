@@ -1330,7 +1330,9 @@ function configurarImportacion() {
 
     const archivo = document.getElementById('formFile')
     if (archivo) {
-        archivo.hidden = !puedeAdmin
+        // El input permanece oculto: el label "Importar CSV" es el único control
+        // visible y es el que abre el selector de archivos.
+        archivo.hidden = true
         if (archivo.dataset.configurado !== 'true') {
             archivo.addEventListener('change', async (evento) => {
                 const seleccionado = evento.target?.files?.[0]
