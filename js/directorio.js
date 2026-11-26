@@ -1205,6 +1205,23 @@ function construirTablaImportacion(filas, incluirPassword = false) {
     return tabla
 }
 
+const PLANTILLA_IMPORTACION = [
+    'nombre;apellido;email;puesto;departamento;sede;tipo_contrato;salario',
+    'Ana;Ramírez;ana.ramirez@example.com;Diseñadora;Tecnología;CENTRO;INDEFINIDO;2500000'
+].join('\r\n') + '\r\n'
+
+function descargarPlantillaImportacion() {
+    const contenido = new Blob([`\uFEFF${PLANTILLA_IMPORTACION}`], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(contenido)
+    const enlace = document.createElement('a')
+    enlace.href = url
+    enlace.download = 'plantilla-importar-empleados.csv'
+    document.body.append(enlace)
+    enlace.click()
+    enlace.remove()
+    URL.revokeObjectURL(url)
+}
+
 function abrirModalImportacion() {
     const modal = document.getElementById('modalImportarEmpleados')
     if (modal && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
@@ -1222,6 +1239,8 @@ async function prepararImportacion(archivo) {
         filasImportacion = convertirFilasImportacion(parsearCsv(await archivo.text()))
         nombreArchivoImportacion = archivo.name || 'empleados.csv'
 
+        const ayuda = document.getElementById('ayudaFormatoImportacion')
+        if (ayuda) ayuda.open = false
         setText('resumenImportacion',
             `${filasImportacion.length} ${filasImportacion.length === 1 ? 'empleado listo' : 'empleados listos'} para importar desde ${nombreArchivoImportacion}. Si el CSV no trae contraseña, el backend generará una temporal.`
         )
@@ -1348,6 +1367,25 @@ function configurarImportacion() {
     if (boton && boton.dataset.configurado !== 'true') {
         boton.addEventListener('click', ejecutarImportacion)
         boton.dataset.configurado = 'true'
+    }
+
+    const formato = document.getElementById('btnFormatoCsv')
+    if (formato && formato.dataset.configurado !== 'true') {
+        formato.addEventListener('click', () => {
+            const ayuda = document.getElementById('ayudaFormatoImportacion')
+            if (ayuda) ayuda.open = true
+            const confirmar = document.getElementById('btnConfirmarImportacion')
+            if (confirmar) confirmar.hidden = true
+            abrirModalImportacion()
+        })
+        formato.dataset.configurado = 'true'
+    }
+
+    setText('ejemploCsvImportacion', PLANTILLA_IMPORTACION.trimEnd())
+    const plantilla = document.getElementById('btnDescargarPlantilla')
+    if (plantilla && plantilla.dataset.configurado !== 'true') {
+        plantilla.addEventListener('click', descargarPlantillaImportacion)
+        plantilla.dataset.configurado = 'true'
     }
 
     importacionConfigurada = true
