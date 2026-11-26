@@ -21,6 +21,45 @@ function setText(id, texto) {
     if (elemento) elemento.textContent = texto
 }
 
+const FILAS_VISIBLES = 5
+
+// Mide las cinco primeras filas para que el contenedor muestre exactamente
+// cinco, con el resto accesible mediante scroll. Se vuelve a aplicar al
+// redimensionar porque las filas pueden cambiar de altura al ajustarse.
+function ajustarAlturaCinco(id, selectorFilas) {
+    const cuerpo = document.getElementById(id)
+    if (!cuerpo) return
+    const envoltorio = cuerpo.closest('.horizon-scroll-cinco') ?? cuerpo.parentElement
+    if (!envoltorio || !envoltorio.classList.contains('horizon-scroll-cinco')) return
+
+    envoltorio.style.maxHeight = ''
+    const filas = Array.from(cuerpo.querySelectorAll(selectorFilas))
+    if (filas.length <= FILAS_VISIBLES) {
+        envoltorio.style.maxHeight = 'none'
+        return
+    }
+
+    const alturaFilas = filas.slice(0, FILAS_VISIBLES)
+        .reduce((total, fila) => total + fila.getBoundingClientRect().height, 0)
+    const cabecera = envoltorio.querySelector('thead')
+    const alturaCabecera = cabecera ? cabecera.getBoundingClientRect().height : 0
+    envoltorio.style.maxHeight = `${Math.ceil(alturaCabecera + alturaFilas)}px`
+}
+
+function ajustarVistasCinco() {
+    ajustarAlturaCinco('decisionesBody', 'tr')
+    ajustarAlturaCinco('actividadLista', 'li')
+    ajustarAlturaCinco('ausenciasBody', 'tr')
+}
+
+window.addEventListener('resize', ajustarVistasCinco)
+// La densidad compacta cambia el alto de las filas; vuelve a medir al cambiar
+// la clase del body (preferencias guardadas o cambio en caliente).
+new MutationObserver(ajustarVistasCinco).observe(document.body, {
+    attributes: true,
+    attributeFilter: ['class']
+})
+
 function etiquetaFecha(fecha) {
     if (typeof fecha !== 'string') return fecha ?? ''
 
@@ -494,6 +533,7 @@ function renderizarDecisiones(datos, puedeResolver = false) {
         cuerpo.append(fila)
     }
 
+    ajustarAlturaCinco('decisionesBody', 'tr')
     setText('decisionesDetalle', `${datos.cantidad} ${datos.cantidad === 1 ? 'pendiente' : 'pendientes'}`)
 }
 
@@ -746,6 +786,7 @@ function renderizarActividad(datos) {
         lista.append(item)
     }
 
+    ajustarAlturaCinco('actividadLista', 'li')
     setText('actividadDetalle', 'Últimos movimientos registrados')
 }
 
@@ -844,6 +885,7 @@ function renderizarAusencias(datos, puedeGestionar = false) {
         cuerpo.append(fila)
     }
 
+    ajustarAlturaCinco('ausenciasBody', 'tr')
     const pendientes = lista.filter((ausencia) => ausencia.status === 'PENDIENTE').length
     setText(
         'ausenciasDetalle',

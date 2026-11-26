@@ -291,3 +291,23 @@ body.densidad-compacta .modal-header, body.densidad-compacta .modal-footer { pad
 @media (prefers-reduced-motion: reduce) {
   .btn-primary:hover { transform: none; }
 }
+
+/* Resumen: cinco filas visibles y el resto accesible con scroll interno.
+   js/resumen.js ajusta la altura exacta según el alto real de las filas. */
+.horizon-scroll-cinco {
+  max-height: 17.5rem;
+  flex-shrink: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.horizon-scroll-lista { max-height: 12.25rem; }
+.horizon-scroll-cinco thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--horizon-surface);
+}
+.horizon-scroll-cinco::-webkit-scrollbar { width: 8px; height: 8px; }
+.horizon-scroll-cinco::-webkit-scrollbar-thumb { background: #cfd6e2; border-radius: 8px; }
+[data-bs-theme="dark"] .horizon-scroll-cinco::-webkit-scrollbar-thumb { background: #49515f; }
