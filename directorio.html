@@ -9,7 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="css/styles.css?v=20261125-ux2">
+    <link rel="stylesheet" href="css/styles.css?v=20261125-ux3">
     <script src="js/config.js?v=20261129"></script>
     <script src="js/api.js?v=20261206"></script>
     <script src="js/auth.js?v=20261206"></script>
@@ -41,19 +41,39 @@
                 </li>
             </ul>
         </nav>
-        <!--Botones de cuenta-->
-        <a class="btn btn-secondary bg-primary fw-bold" href="login.html" data-logout>Cerrar sesión</a>
-        <div class="d-grid gap-2 mt-auto">
-            <button type="button" class="btn btn-outline-primary fw-bold" data-bs-toggle="modal"
-                data-bs-target="#modalPreferencias">
-                Preferencias
+        <!-- Menú de cuenta: agrupa preferencias, contraseña y cierre de sesión. -->
+        <div class="dropup mt-auto">
+            <button id="menuCuenta" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-between gap-2"
+                type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                aria-label="Abrir menú de cuenta">
+                <span class="d-flex align-items-center gap-2">
+                    <i class="bi bi-person-circle" aria-hidden="true"></i>
+                    <span>Mi cuenta</span>
+                </span>
+                <i class="bi bi-chevron-up small" aria-hidden="true"></i>
             </button>
-            <button type="button" class="btn btn-outline-primary fw-bold" data-bs-toggle="modal"
-                data-bs-target="#modalCambiarContrasena">
-                Cambiar contraseña
-            </button>
-            <small id="estadoNotificaciones" class="text-body-tertiary small"></small>
+            <ul class="dropdown-menu dropdown-menu-end w-100" aria-labelledby="menuCuenta">
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center gap-2"
+                        data-bs-toggle="modal" data-bs-target="#modalPreferencias">
+                        <i class="bi bi-sliders2" aria-hidden="true"></i> Preferencias
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center gap-2"
+                        data-bs-toggle="modal" data-bs-target="#modalCambiarContrasena">
+                        <i class="bi bi-key" aria-hidden="true"></i> Cambiar contraseña
+                    </button>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <button type="button" class="dropdown-item text-danger d-flex align-items-center gap-2" data-logout>
+                        <i class="bi bi-box-arrow-right" aria-hidden="true"></i> Cerrar sesión
+                    </button>
+                </li>
+            </ul>
         </div>
+        <small id="estadoNotificaciones" class="text-body-tertiary small mt-2 text-center"></small>
     </aside>
 
     <button class="horizon-menu-toggle btn btn-outline-secondary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuLateral" aria-controls="menuLateral" aria-label="Abrir menú de navegación">
@@ -86,20 +106,20 @@
         <main class="horizon-main flex-grow-1 px-4">
             <!-- Titulo y Boton -->
             <div class="container-fluid p-0 mt-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
+                <div class="horizon-directory-heading d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                    <div class="horizon-directory-heading-copy">
                         <h1>Directorio de Empleados</h1>
                         <p class="text-body-tertiary">El expediente de cada persona, conectado con el resto de tu ERP.</p>
                         <div id="alertaSesion" class="alert alert-warning d-none" role="alert" data-permisos-insuficientes></div>
                     </div>
-                    <button type="button" class="btn btn-primary text-nowrap flex-wrap gap-2" data-bs-toggle="modal"
+                    <button type="button" class="btn btn-primary text-nowrap horizon-add-employee" data-bs-toggle="modal"
                         data-bs-target="#formularioEstatico">+ Añadir empleado</button>
                 </div>
             </div>
 
             <!-- Tarjetas -->
             <div class="container-fluid p-0">
-                <div class="row g-3">
+                <div class="row g-3 horizon-kpi-grid">
                     <!-- Card plantilla -->
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
@@ -147,7 +167,7 @@
                         <span class="small text-body-secondary"><span id="navTotalEmpleados">—</span> registros</span>
                     </div>
                     <!-- Primera Linea de elementos Dash Board-->
-                    <ul class="d-flex gap-4 list-unstyled flex-wrap gap-3">
+                    <ul class="horizon-directory-controls d-flex gap-3 list-unstyled flex-wrap mb-3">
                         <li>
                             <input class="form-control bg-gray d-none d-sm-block directory-search" type="search" id="buscarEmpleados"
                                 placeholder="Nombre, ID o correo electrónico" aria-label="Buscar empleados">

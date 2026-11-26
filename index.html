@@ -10,7 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="css/styles.css?v=20261125-ux2">
+    <link rel="stylesheet" href="css/styles.css?v=20261125-ux3">
     <script src="js/config.js?v=20261123"></script>
     <script src="js/api.js?v=20261206"></script>
     <script src="js/auth.js?v=20261206"></script>
@@ -42,19 +42,39 @@
                 </li>
             </ul>
         </nav>
-        <a class="btn btn-secondary bg-primary fw-bold" href="login.html" data-logout>Cerrar sesión</a>
-        <!--Botones de cuenta-->
-        <div class="d-grid gap-2 mt-auto">
-            <button type="button" class="btn btn-outline-primary fw-bold" data-bs-toggle="modal"
-                data-bs-target="#modalPreferencias">
-                Preferencias
+        <!-- Menú de cuenta: agrupa preferencias, contraseña y cierre de sesión. -->
+        <div class="dropup mt-auto">
+            <button id="menuCuenta" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-between gap-2"
+                type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                aria-label="Abrir menú de cuenta">
+                <span class="d-flex align-items-center gap-2">
+                    <i class="bi bi-person-circle" aria-hidden="true"></i>
+                    <span>Mi cuenta</span>
+                </span>
+                <i class="bi bi-chevron-up small" aria-hidden="true"></i>
             </button>
-            <button type="button" class="btn btn-outline-primary fw-bold" data-bs-toggle="modal"
-                data-bs-target="#modalCambiarContrasena">
-                Cambiar contraseña
-            </button>
-            <small id="estadoNotificaciones" class="text-body-tertiary small"></small>
+            <ul class="dropdown-menu dropdown-menu-end w-100" aria-labelledby="menuCuenta">
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center gap-2"
+                        data-bs-toggle="modal" data-bs-target="#modalPreferencias">
+                        <i class="bi bi-sliders2" aria-hidden="true"></i> Preferencias
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center gap-2"
+                        data-bs-toggle="modal" data-bs-target="#modalCambiarContrasena">
+                        <i class="bi bi-key" aria-hidden="true"></i> Cambiar contraseña
+                    </button>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <button type="button" class="dropdown-item text-danger d-flex align-items-center gap-2" data-logout>
+                        <i class="bi bi-box-arrow-right" aria-hidden="true"></i> Cerrar sesión
+                    </button>
+                </li>
+            </ul>
         </div>
+        <small id="estadoNotificaciones" class="text-body-tertiary small mt-2 text-center"></small>
     </aside>
 
     <button class="horizon-menu-toggle btn btn-outline-secondary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuLateral" aria-controls="menuLateral" aria-label="Abrir menú de navegación">
@@ -94,7 +114,7 @@
 
             <!-- Cards de información-->
             <div class="container-fluid p-0">
-                <div class="row g-3">
+                <div class="row g-3 horizon-kpi-grid">
                     <!-- Card plantilla -->
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
