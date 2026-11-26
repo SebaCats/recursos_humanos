@@ -216,8 +216,11 @@
                         <li>
                             <div class="align-content-center" id="directorioEmpleadosCount">Cargando empleados...</div>
                         </li>
-                        <li id="grupoImportar" hidden>
-                            <label for="formFile" class="btn btn-primary">Importar CSV</label>
+                        <li id="grupoImportar" hidden class="d-flex align-items-center gap-2">
+                            <label for="formFile" class="btn btn-primary mb-0">Importar CSV</label>
+                            <button type="button" id="btnFormatoCsv" class="btn btn-sm btn-link text-decoration-none p-0">
+                                Ver formato
+                            </button>
                             <input type="file" id="formFile" accept=".csv,text/csv" hidden>
                         </li>
                         <li>
@@ -496,6 +499,18 @@
                 </div>
                 <div class="modal-body">
                     <div id="alertaImportacion" class="alert d-none" role="alert"></div>
+                    <details id="ayudaFormatoImportacion" class="mb-3">
+                        <summary class="fw-semibold small">Formato del CSV</summary>
+                        <div class="small text-body-tertiary mt-2">
+                            <p class="mb-2">Primera fila con cabeceras. Separador <code>;</code> (también admite <code>,</code>), comillas dobles y codificación UTF-8.</p>
+                            <p class="mb-2"><strong>Columnas obligatorias:</strong> nombre, apellido, email, puesto, departamento, sede, tipo_contrato y salario. Opcional: <code>password</code> (si falta se genera una temporal). Se ignoran <code>id</code>, <code>rol</code> y <code>fecha_alta</code>.</p>
+                            <p class="mb-2"><strong>Sede:</strong> NORTE / CENTRO / SUR (o NORTH / CENTER / SOUTH). El departamento debe existir en esa sede.</p>
+                            <p class="mb-2"><strong>Salario:</strong> entre 500.000 y 10.000.000. Se acepta <code>2500000</code> o <code>2.500.000</code>.</p>
+                            <p class="mb-2"><strong>Límites:</strong> hasta 100 filas. Las filas con errores se informan por número sin detener las demás.</p>
+                            <pre id="ejemploCsvImportacion" class="bg-body-tertiary p-2 rounded small mb-2"></pre>
+                            <button type="button" id="btnDescargarPlantilla" class="btn btn-sm btn-outline-primary">Descargar plantilla</button>
+                        </div>
+                    </details>
                     <div id="resumenImportacion" class="mb-3"></div>
                     <h2 class="h6" id="tituloVistaPrevia">Vista previa</h2>
                     <div id="vistaPreviaImportacion" class="table-responsive"></div>
@@ -612,7 +627,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
-    <script src="js/directorio.js?v=20261207-csv"></script>
+    <script src="js/directorio.js?v=20261207-csv-formato"></script>
     <script src="js/password.js?v=20261129"></script>
     <script src="js/preferencias.js?v=20261207"></script>
     <script src="js/busqueda.js?v=20261206"></script>
