@@ -4,8 +4,6 @@ const formatoMoneda = new Intl.NumberFormat('es-CO', {
     currency: 'COP',
     maximumFractionDigits: 0
 })
-const etiquetasSede = { NORTH: 'Norte', CENTER: 'Centro', SOUTH: 'Sur' }
-
 let periodoEvolucion = 'mes'
 let datosResumen = null
 let datosDecisiones = null
@@ -77,10 +75,6 @@ function etiquetaFecha(fecha) {
     }
 
     return fecha
-}
-
-function etiquetaSede(nombre) {
-    return etiquetasSede[nombre] ?? nombre ?? ''
 }
 
 function actualizarPlantilla(total) {
@@ -258,22 +252,6 @@ function renderizarNomina(salarios) {
     })
 
     contenedor.replaceChildren(lista)
-}
-
-function renderizarDistribucion(porSede, porRol, porContrato) {
-    const partes = []
-
-    if (Array.isArray(porRol)) {
-        porRol.forEach((fila) => partes.push(`${fila.nombre}: ${fila.cantidad}`))
-    }
-    if (Array.isArray(porContrato)) {
-        porContrato.forEach((fila) => partes.push(`${fila.nombre}: ${fila.cantidad}`))
-    }
-    if (Array.isArray(porSede)) {
-        porSede.forEach((fila) => partes.push(`${etiquetaSede(fila.nombre)}: ${fila.cantidad}`))
-    }
-
-    setText('distribucionDetalle', partes.join(' · '))
 }
 
 const formatoPorcentaje = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 })
@@ -1243,8 +1221,7 @@ async function cargarIndicadores(salarioActual) {
 
 async function cargarResumen() {
     const nombres = [
-        'departamentos', 'salario', 'resumen', 'evolución',
-        'sedes', 'roles', 'contratos', 'nómina por departamento'
+        'departamentos', 'salario', 'resumen', 'evolución', 'nómina por departamento'
     ]
 
     const peticiones = await Promise.allSettled([
@@ -1252,9 +1229,6 @@ async function cargarResumen() {
         window.HORIZON_API.getTotalSalario(),
         window.HORIZON_API.getResumen(),
         window.HORIZON_API.getEvolucionContrataciones(),
-        window.HORIZON_API.getEmpleadosBySede(),
-        window.HORIZON_API.getEmpleadosByRole(),
-        window.HORIZON_API.getEmpleadosByContractType(),
         window.HORIZON_API.getSalarioByDepartamento()
     ])
 
@@ -1264,7 +1238,7 @@ async function cargarResumen() {
         }
     })
 
-    const [departamentos, salario, resumen, evolucion, porSede, porRol, porContrato, nomina] = peticiones
+    const [departamentos, salario, resumen, evolucion, nomina] = peticiones
 
     let totalPorDepartamentos = 0
     if (departamentos.status === 'fulfilled') {
@@ -1290,12 +1264,6 @@ async function cargarResumen() {
     configurarBotonEvolucion()
 
     renderizarNomina(nomina.status === 'fulfilled' ? nomina.value : [])
-
-    renderizarDistribucion(
-        porSede.status === 'fulfilled' ? porSede.value : [],
-        porRol.status === 'fulfilled' ? porRol.value : [],
-        porContrato.status === 'fulfilled' ? porContrato.value : []
-    )
 
     await cargarIndicadores(salario.status === 'fulfilled' ? Number(salario.value?.total ?? 0) : 0)
 }
