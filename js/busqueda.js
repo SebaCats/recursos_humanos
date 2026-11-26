@@ -168,10 +168,25 @@ function configurarBusquedaGlobal() {
         ocultarResultadosBusqueda()
     })
 
-    document.getElementById('btnBuscarEmpresaMovil')?.addEventListener('click', () => {
-        entrada.classList.remove('d-none')
-        entrada.focus()
-        if (entrada.value.trim().length >= 2) ejecutarBusquedaGlobal(entrada.value.trim())
+    const botonMovil = document.getElementById('btnBuscarEmpresaMovil')
+    botonMovil?.addEventListener('click', () => {
+        const abierto = entrada.classList.toggle('mobile-search-open')
+        botonMovil.setAttribute('aria-expanded', String(abierto))
+        botonMovil.setAttribute('aria-label', abierto ? 'Ocultar buscador' : 'Mostrar buscador')
+        if (abierto) {
+            entrada.focus()
+            if (entrada.value.trim().length >= 2) ejecutarBusquedaGlobal(entrada.value.trim())
+        } else {
+            ocultarResultadosBusqueda()
+        }
+    })
+    entrada.addEventListener('keydown', (evento) => {
+        if (evento.key === 'Escape' && entrada.classList.contains('mobile-search-open')) {
+            entrada.classList.remove('mobile-search-open')
+            botonMovil?.setAttribute('aria-expanded', 'false')
+            botonMovil?.focus()
+            ocultarResultadosBusqueda()
+        }
     })
 }
 

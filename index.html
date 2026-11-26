@@ -9,16 +9,17 @@
     <title>RR.HH. · Resumen</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="css/styles.css?v=20261204">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/styles.css?v=20261125-ux2">
     <script src="js/config.js?v=20261123"></script>
     <script src="js/api.js?v=20261206"></script>
     <script src="js/auth.js?v=20261206"></script>
 </head>
 
-<body class="d-flex flex-row bg-gray">
+<body class="horizon-app d-flex flex-row bg-gray">
 
     <!-- Barra lateral -->
-    <aside id="menuLateral" class="offcanvas-lg offcanvas-start d-flex flex-column vh-100 p-3 border-end bg-white shadow-r" style="min-width: 250px;" tabindex="-1">
+    <aside id="menuLateral" class="horizon-sidebar offcanvas-lg offcanvas-start d-flex flex-column vh-100 p-3 border-end bg-white shadow-r" tabindex="-1">
         <!-- Sección usuario -->
         <section class="d-flex align-items-center gap-2 mb-4 pb-3 border-bottom">
             <div id="avatarUsuario"
@@ -56,25 +57,24 @@
         </div>
     </aside>
 
-    <button class="btn btn-outline-secondary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuLateral" aria-controls="menuLateral">
+    <button class="horizon-menu-toggle btn btn-outline-secondary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuLateral" aria-controls="menuLateral" aria-label="Abrir menú de navegación">
         <i class="bi bi-list"></i>
     </button>
 
     <!-- Área de contenido principal -->
-    <div class="flex-grow-1 d-flex flex-column overflow-auto vh-100">
+    <div class="horizon-workspace flex-grow-1 d-flex flex-column overflow-auto vh-100">
         <!-- Header  -->
         <header
-            class="sticky-top z-3 d-flex align-items-center justify-content-between p-3 mx-4 mt-0 rounded border-bottom shadow-b bg-white">
-            <h5 class="text-body-tertiary d-flex m-0">Horizon ><div class="text-black mx-1">Recursos humanos</div>
-            </h5>
+            class="horizon-header sticky-top z-3 d-flex align-items-center justify-content-between p-3 mx-4 mt-3 rounded border-bottom shadow-b bg-white">
+            <div class="horizon-breadcrumb" aria-label="Ubicación actual"><span>Horizon</span><span aria-hidden="true">/</span><strong>Recursos humanos</strong></div>
             <div class="position-relative flex-shrink-0">
                 <div class="d-flex align-items-center">
                     <input id="buscarEmpresa"
-                        class="form-control me-2 search-icon bg-gray border-0 d-none d-sm-block" type="search"
-                        placeholder="Buscar en mi empresa..." style="width: 250px;" aria-label="Buscar en mi empresa"
+                        class="form-control me-2 search-icon bg-gray border-0 d-none d-sm-block horizon-global-search" type="search"
+                        placeholder="Buscar en mi empresa..."  aria-label="Buscar en mi empresa"
                         aria-controls="resultadosBusqueda" aria-expanded="false" autocomplete="off">
                     <button id="btnBuscarEmpresaMovil" class="btn search-icon d-sm-none" type="button"
-                        aria-label="Mostrar buscador">
+                        aria-label="Mostrar buscador" aria-expanded="false">
                         <i class="bi bi-search"></i>
                     </button>
                 </div>
@@ -84,7 +84,7 @@
         </header>
 
         <!-- Contenido principal (antes pages/resumen.ejs) -->
-        <main class="flex-grow-1 px-4">
+        <main class="horizon-main flex-grow-1 px-4">
             <!-- Contenido principal -->
             <div class="container-fluid p-0 mt-3">
                 <h1>Las personas en perspectiva</h1>
@@ -99,7 +99,7 @@
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Plantilla activa</section>
-                            <h1 id="plantillaActiva">—</h1>
+                            <p class="h2 fw-semibold mb-1" id="plantillaActiva">—</p>
                             <small id="plantillaDetalle" class="text-success">Cargando detalle...</small>
                         </article>
                     </div>
@@ -107,7 +107,7 @@
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Rotación acumulada</section>
-                            <h1 id="rotacionValor">—</h1>
+                            <p class="h2 fw-semibold mb-1" id="rotacionValor">—</p>
                             <small id="rotacionDetalle" class="text-success">Cargando rotación...</small>
                         </article>
                     </div>
@@ -115,7 +115,7 @@
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Ausentismo mensual</section>
-                            <h1 id="ausentismoValor">—</h1>
+                            <p class="h2 fw-semibold mb-1" id="ausentismoValor">—</p>
                             <small id="ausentismoDetalle" class="text-success">Cargando ausentismo...</small>
                         </article>
                     </div>
@@ -123,7 +123,7 @@
                     <div class="col-12 col-sm-6 col-md-3">
                         <article class="card shadow-b p-3 h-100">
                             <section class="text-body-tertiary">Coste de nómina previsto</section>
-                            <h1 id="totalNomina">—</h1>
+                            <p class="h2 fw-semibold mb-1" id="totalNomina">—</p>
                             <small id="nominaDetalle" class="text-success">Cargando nómina...</small>
                             <button type="button" id="btnCerrarNomina" class="btn btn-sm btn-outline-primary mt-2" hidden
                                 data-bs-toggle="modal" data-bs-target="#modalCerrarNomina">

@@ -6,7 +6,15 @@
 
 Panel web de administración de Recursos Humanos construido con **HTML5**, **CSS**, **JavaScript** y **Bootstrap 5**. Incluye un resumen ejecutivo con indicadores y gráficas, un directorio de empleados y autenticación mediante **cookie de sesión HttpOnly** emitida por el backend.
 
-> **Proyecto en desarrollo:** el frontend consume autenticación, catálogos, reportes, directorio (con paginación y filtros), detalle de empleado y alta, y permite resolver decisiones y programar hitos desde el resumen, exportar el directorio a CSV, buscar en toda la empresa desde el encabezado, gestionar el expediente documental desde la modal del empleado, completar el ciclo de ausencias (solicitar, aprobar y rechazar), cerrar la nómina y registrar bajas o nuevos contratos desde la ficha del empleado, e importar empleados desde CSV, y configurar preferencias personales. Quedan como elementos visuales el filtro de estado, "Columnas" y la sección de actividad.
+> **Proyecto en desarrollo:** el frontend consume autenticación, catálogos, reportes, directorio (con paginación y filtros), detalle de empleado y alta, y permite resolver decisiones y programar hitos desde el resumen, exportar el directorio a CSV, buscar en toda la empresa desde el encabezado, gestionar el expediente documental desde la modal del empleado, completar el ciclo de ausencias (solicitar, aprobar y rechazar), cerrar la nómina y registrar bajas o nuevos contratos desde la ficha del empleado, importar empleados desde CSV y configurar preferencias personales.
+
+## Actualización de interfaz UX/UI
+
+Se incorporó una capa visual compartida en `css/styles.css` para mantener la identidad azul de Horizon y unificar superficies, tipografía, botones, formularios, tablas, modales y navegación. Se mejoraron los layouts de resumen y directorio, la adaptación móvil de las búsquedas, el formulario de inicio de sesión y la página 404.
+
+Los controles de directorio que todavía no tienen comportamiento conectado (pestañas de estados y selector de columnas) se retiraron temporalmente para evitar acciones engañosas. Los filtros funcionales de departamento, sede y contrato, la paginación y las operaciones conectadas al backend se mantienen.
+
+La interfaz ahora ofrece mejores estados de foco y carga en el login, respeta movimiento reducido y aplica superficies y controles propios al tema oscuro. La preferencia de idioma continúa actualizando el atributo `lang`; la traducción completa de textos sigue pendiente.
 
 ## Estado actual
 
