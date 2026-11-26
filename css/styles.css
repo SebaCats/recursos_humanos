@@ -47,7 +47,9 @@ body {
 .horizon-sidebar .nav-link:hover { background: #f3f6fb; color: var(--horizon-primary); }
 .horizon-sidebar .nav-item.bg-primary-subtle { background: var(--horizon-primary-soft) !important; }
 .horizon-sidebar .nav-item.bg-primary-subtle .nav-link { color: var(--horizon-primary); }
-.horizon-sidebar [data-logout] { margin-top: 1rem; }
+.horizon-sidebar .dropup > .btn { min-height: 42px; }
+.horizon-sidebar .dropup .dropdown-menu { margin-bottom: .5rem; }
+.horizon-sidebar .dropdown-item { font-size: .9rem; }
 .horizon-sidebar .btn { min-height: 40px; }
 .horizon-workspace { min-width: 0; background: var(--horizon-bg); }
 .horizon-header {
@@ -213,4 +215,79 @@ body.densidad-compacta .modal-header, body.densidad-compacta .modal-footer { pad
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+
+
+/* Ajustes responsive adicionales: distribución predecible en móvil, tablet y desktop. */
+.horizon-kpi-grid > [class*="col-"] { display: flex; }
+.horizon-kpi-grid .card { width: 100%; min-width: 0; }
+.horizon-main, .horizon-workspace, .horizon-header { min-width: 0; }
+.horizon-directory-heading-copy { min-width: 0; flex: 1 1 18rem; }
+.horizon-directory-heading-copy p { margin-bottom: 0; }
+.horizon-add-employee { flex: 0 0 auto; }
+.horizon-directory-controls { align-items: center; padding-left: 0; }
+.horizon-directory-controls > li { min-width: 0; }
+.horizon-directory-controls .dropdown, .horizon-directory-controls .dropdown > .btn { max-width: 100%; }
+.horizon-directory-controls .btn { white-space: nowrap; }
+.table-responsive { -webkit-overflow-scrolling: touch; }
+.table-responsive:focus-visible { outline: 2px solid rgba(13,110,253,.45); outline-offset: 2px; }
+.modal-dialog { margin: .75rem auto; }
+.modal-dialog-scrollable .modal-content { max-height: calc(100dvh - 1.5rem); }
+.modal-dialog-scrollable .modal-body { overflow-y: auto; overscroll-behavior: contain; }
+
+/* Tablet: conservar dos tarjetas por fila y evitar KPI excesivamente estrechos. */
+@media (min-width: 576px) and (max-width: 1199.98px) {
+  .horizon-kpi-grid > [class*="col-"] { flex: 0 0 auto; width: 50%; }
+}
+
+/* Portátiles y escritorios compactos. */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  :root { --horizon-sidebar-width: 232px; }
+  .horizon-header { margin-left: 1.25rem !important; margin-right: 1.25rem !important; }
+  .horizon-main { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
+  .horizon-global-search { width: min(245px, 27vw); }
+}
+
+/* Móviles: una columna, encabezados apilables y controles táctiles cómodos. */
+@media (max-width: 575.98px) {
+  body.horizon-app { display: block !important; min-height: 100dvh; }
+  .horizon-workspace { height: auto !important; min-height: 100dvh; overflow: visible !important; }
+  .horizon-header { position: sticky; top: .5rem; margin-left: 3.65rem !important; margin-right: .75rem !important; }
+  .horizon-main { padding-left: .85rem !important; padding-right: .85rem !important; }
+  .horizon-kpi-grid > [class*="col-"] { width: 100%; }
+  .horizon-directory-heading { align-items: stretch !important; }
+  .horizon-directory-heading-copy { flex-basis: 100%; }
+  .horizon-add-employee { width: 100%; min-height: 44px; }
+  .horizon-directory-controls { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem !important; }
+  .horizon-directory-controls > li { width: 100%; }
+  .horizon-directory-controls > li:first-child { grid-column: 1 / -1; }
+  .horizon-directory-controls .dropdown, .horizon-directory-controls .dropdown > .btn,
+  .horizon-directory-controls > li > .btn { width: 100%; }
+  .directory-search.mobile-search-open { width: 100% !important; }
+  .horizon-global-search.mobile-search-open { width: min(58vw, 230px) !important; }
+  .horizon-header.search-expanded { flex-wrap: wrap; }
+  .horizon-main .card { padding: 1rem !important; }
+  .horizon-main .pagination { flex-wrap: wrap; gap: .15rem; }
+  .horizon-main .pagination .page-link { padding: .35rem .55rem; }
+  .modal-dialog, .modal-dialog.modal-lg { margin: .5rem; }
+  .modal-dialog:not(.modal-dialog-scrollable) .modal-content { max-height: calc(100dvh - 1rem); }
+  .modal-dialog:not(.modal-dialog-scrollable) .modal-body { overflow-y: auto; overscroll-behavior: contain; }
+  .modal-footer { flex-wrap: wrap; }
+  .modal-footer .btn { flex: 1 1 auto; }
+  .horizon-login-shell { min-height: 100dvh; }
+  .horizon-login-content { min-height: 65dvh; }
+}
+
+/* Tablet estrecha: el login pasa a una sola columna antes de comprimir el formulario. */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .horizon-login-shell { grid-template-columns: 1fr; }
+  .horizon-login-aside { min-height: auto; padding: 1.5rem 2rem; }
+  .horizon-login-message { max-width: 100%; padding: 2rem 0 1rem; }
+  .horizon-login-message h2 { font-size: 2.35rem; }
+  .horizon-login-aside-footer { display: none; }
+  .horizon-login-content { min-height: 60vh; padding: 2.5rem 2rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary:hover { transform: none; }
 }
