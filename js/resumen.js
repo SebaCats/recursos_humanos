@@ -13,6 +13,7 @@ let datosAusencias = null
 let datosNomina = null
 let salarioVigente = 0
 let puedeGestionarRRHH = false
+let origenCierreNomina = false
 let accionesDecisionesConfiguradas = false
 let formularioHitoConfigurado = false
 
@@ -234,26 +235,29 @@ function renderizarDepartamentos(departamentos) {
 
 function renderizarNomina(salarios) {
     const contenedor = document.getElementById('nominaPorDepartamento')
-    if (!contenedor || !Array.isArray(salarios)) return
+    if (!contenedor) return
 
-    if (salarios.length === 0) {
+    if (!Array.isArray(salarios) || salarios.length === 0) {
         contenedor.textContent = 'Sin datos de nómina'
         return
     }
 
-    const fragmento = document.createDocumentFragment()
-    const titulo = document.createElement('div')
-    titulo.className = 'fw-semibold'
-    titulo.textContent = 'Nómina por departamento'
-    fragmento.append(titulo)
+    const lista = document.createElement('div')
+    lista.className = 'list-group list-group-flush'
 
     salarios.forEach((fila) => {
         const linea = document.createElement('div')
-        linea.textContent = `${fila.nombre} (${fila.sede}): ${formatoMoneda.format(Number(fila.total ?? 0))}`
-        fragmento.append(linea)
+        linea.className = 'list-group-item d-flex justify-content-between gap-3 px-0 py-2'
+        const nombre = document.createElement('span')
+        nombre.textContent = `${fila.nombre} · ${fila.sede}`
+        const total = document.createElement('strong')
+        total.className = 'text-nowrap'
+        total.textContent = formatoMoneda.format(Number(fila.total ?? 0))
+        linea.append(nombre, total)
+        lista.append(linea)
     })
 
-    contenedor.replaceChildren(fragmento)
+    contenedor.replaceChildren(lista)
 }
 
 function renderizarDistribucion(porSede, porRol, porContrato) {
@@ -360,6 +364,40 @@ function actualizarBotonCerrarNomina() {
     boton.hidden = !puedeGestionarRRHH || !pendiente
 }
 
+function rellenarDetalleNomina() {
+    setText(
+        'nominaCosteModal',
+        document.getElementById('totalNomina')?.textContent ?? '—'
+    )
+    setText(
+        'nominaPeriodoModal',
+        datosNomina?.period
+            ? `${datosNomina.period} · ${datosNomina.status === 'PENDIENTE' ? 'pendiente de cierre' : 'cerrada'}`
+            : 'Sin cierre registrado'
+    )
+}
+
+function ocultarModalDetalleNomina() {
+    const modal = document.getElementById('modalNomina')
+    if (modal && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        bootstrap.Modal.getInstance(modal)?.hide()
+    }
+}
+
+function mostrarModalDetalleNomina() {
+    const modal = document.getElementById('modalNomina')
+    if (modal && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        bootstrap.Modal.getOrCreateInstance(modal).show()
+    }
+}
+
+function mostrarModalCierreNomina() {
+    const modal = document.getElementById('modalCerrarNomina')
+    if (modal && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        bootstrap.Modal.getOrCreateInstance(modal).show()
+    }
+}
+
 function mostrarAlertaCerrarNomina(mensaje, tipo) {
     const alerta = document.getElementById('alertaCerrarNomina')
     if (!alerta) return
@@ -391,14 +429,40 @@ function rellenarModalNomina() {
 function configurarCierreNomina() {
     const boton = document.getElementById('btnCerrarNomina')
     if (boton && boton.dataset.configurado !== 'true') {
-        boton.addEventListener('click', rellenarModalNomina)
+        boton.addEventListener('click', () => {
+            origenCierreNomina = true
+            rellenarModalNomina()
+            ocultarModalDetalleNomina()
+        })
         boton.dataset.configurado = 'true'
     }
 
+    const detalle = document.getElementById('modalNomina')
+    if (detalle && detalle.dataset.configurado !== 'true') {
+        detalle.addEventListener('show.bs.modal', rellenarDetalleNomina)
+        detalle.addEventListener('hidden.bs.modal', () => {
+            if (origenCierreNomina) mostrarModalCierreNomina()
+        })
+        detalle.dataset.configurado = 'true'
+    }
+
+    const modalCierre = document.getElementById('modalCerrarNomina')
+    if (modalCierre && modalCierre.dataset.configurado !== 'true') {
+        modalCierre.addEventListener('hidden.bs.modal', () => {
+            rellenarDetalleNomina()
+            if (origenCierreNomina) {
+                origenCierreNomina = false
+                mostrarModalDetalleNomina()
+            }
+        })
+        modalCierre.dataset.configurado = 'true'
+    }
+
     const formulario = document.getElementById('formCerrarNomina')
-    if (!formulario || formulario.dataset.configurado === 'true') return
-    formulario.addEventListener('submit', cerrarPeriodoNomina)
-    formulario.dataset.configurado = 'true'
+    if (formulario && formulario.dataset.configurado !== 'true') {
+        formulario.addEventListener('submit', cerrarPeriodoNomina)
+        formulario.dataset.configurado = 'true'
+    }
 }
 
 // Cerrar recalcula el total en el backend: se vuelve a consultar la nómina y la
@@ -418,6 +482,7 @@ async function recargarNomina() {
 
     if (peticiones[0].status === 'fulfilled') {
         renderizarNominaDetalle(peticiones[0].value)
+        rellenarDetalleNomina()
     } else {
         setText('nominaDetalle', 'No se pudo recargar la nómina')
     }
@@ -1224,9 +1289,7 @@ async function cargarResumen() {
     actualizarEvolucion(datosEvolucion, 'mes', evolucion.status === 'rejected')
     configurarBotonEvolucion()
 
-    if (nomina.status === 'fulfilled') {
-        renderizarNomina(nomina.value)
-    }
+    renderizarNomina(nomina.status === 'fulfilled' ? nomina.value : [])
 
     renderizarDistribucion(
         porSede.status === 'fulfilled' ? porSede.value : [],
