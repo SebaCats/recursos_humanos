@@ -73,6 +73,10 @@ body {
   box-shadow: var(--horizon-shadow) !important;
 }
 .card.shadow-b, .shadow-b, .shadow-r { box-shadow: var(--horizon-shadow) !important; }
+.horizon-card-clicable { transition: box-shadow var(--horizon-transition), border-color var(--horizon-transition); }
+.horizon-card-clicable:hover { border-color: var(--horizon-primary) !important; box-shadow: var(--horizon-shadow-raised) !important; }
+.horizon-enlace { color: var(--horizon-primary); font-size: .84rem; font-weight: 550; }
+.horizon-enlace::after { cursor: pointer; }
 .card > .text-body-tertiary, .card section.text-body-tertiary { font-size: .84rem; font-weight: 500; }
 .card .h2 { letter-spacing: -.04em; }
 .card h4, .card .h4 { font-size: 1rem; font-weight: 650; letter-spacing: -.015em; }
