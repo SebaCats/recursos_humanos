@@ -284,7 +284,6 @@ async function cargarEmpleados() {
 
         const totalTexto = formatoNumero.format(totalEmpleados)
         setTextSiVacio('directorioPersonasActivas', totalTexto)
-        setTextSiVacio('navTotalEmpleados', totalTexto)
     } catch (error) {
         if (solicitud !== solicitudActual) return
         console.error('Error al cargar el directorio:', error)
@@ -840,7 +839,6 @@ async function cargarIndicadores() {
         const datos = resumen.value
         const total = formatoNumero.format(Number(datos.totalEmployees ?? 0))
         setText('directorioPersonasActivas', total)
-        setText('navTotalEmpleados', total)
 
         const sedes = porSede.status === 'fulfilled' && porSede.value.length > 0
             ? porSede.value.length
@@ -1244,13 +1242,6 @@ async function prepararImportacion(archivo) {
         setText('resumenImportacion',
             `${filasImportacion.length} ${filasImportacion.length === 1 ? 'empleado listo' : 'empleados listos'} para importar desde ${nombreArchivoImportacion}. Si el CSV no trae contraseña, el backend generará una temporal.`
         )
-        const titulo = document.getElementById('tituloVistaPrevia')
-        if (titulo) titulo.hidden = false
-        const previa = document.getElementById('vistaPreviaImportacion')
-        if (previa) {
-            previa.hidden = false
-            previa.replaceChildren(construirTablaImportacion(filasImportacion.slice(0, 5)))
-        }
         const resultados = document.getElementById('resultadosImportacion')
         if (resultados) {
             resultados.hidden = true
@@ -1306,11 +1297,6 @@ async function ejecutarImportacion() {
         setText('resumenImportacion',
             `${insertados} ${insertados === 1 ? 'empleado importado' : 'empleados importados'}, ${fallidos} ${fallidos === 1 ? 'fallido' : 'fallidos'} de ${resultado?.total ?? filasImportacion.length} filas.`
         )
-        const titulo = document.getElementById('tituloVistaPrevia')
-        if (titulo) titulo.hidden = true
-        const previa = document.getElementById('vistaPreviaImportacion')
-        if (previa) previa.hidden = true
-
         const destino = document.getElementById('resultadosImportacion')
         if (destino) {
             const nota = document.createElement('p')
